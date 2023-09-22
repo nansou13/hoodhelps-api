@@ -42,9 +42,64 @@ router.get('/', async (req, res) => {
   }
 });
 
+
 /**
  * @openapi
- * /api/categories/{group_id}:
+ * /api/categories/{category_id}:
+ *   get:
+ *     summary: Liste d'une categorie via son ID et ses jobs
+ *     description: Liste d'une categorie via son ID et ses jobs
+ *     tags:
+ *       - Categories
+ *     parameters:
+ *       - in: path
+ *         name: category_id
+ *         description: ID de la catégorie
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     responses:
+ *       200:
+ *         description: Retourne la liste des jobs d'une catégorie
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                  type: object
+ *                  properties:
+ *                    id:
+ *                      type: string
+ *                      format: uuid
+ *                    name:
+ *                      type: string
+ *       500:
+ *         description: Erreur inconnue
+ */
+router.get('/:category_id', async (req, res) => {
+    
+  try {
+    const categoryID = req.params.category_id
+    const query = `
+    SELECT
+      id,
+      name
+    FROM professions
+    WHERE category_id = $1;
+  `;
+
+    const result = await pool.query(query, [categoryID]);
+    return res.status(200).json(result.rows);
+  } catch (err) {
+    return res.status(500).json({ error: 'Erreur d\'inscription', err });
+  }
+});
+
+
+/**
+ * @openapi
+ * /api/categories/group/{group_id}:
  *   get:
  *     summary: Liste toutes les categories et ses jobs
  *     description: Liste toutes les categories et ses jobs
@@ -91,7 +146,7 @@ router.get('/', async (req, res) => {
  *       500:
  *         description: Erreur inconnue
  */
-router.get('/:group_id', async (req, res) => {
+router.get('/group/:group_id', async (req, res) => {
     
     try {
       const groupId = req.params.group_id

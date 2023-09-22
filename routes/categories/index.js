@@ -38,7 +38,7 @@ router.get('/', async (req, res) => {
     const result = await pool.query('SELECT * FROM categories');
     return res.status(200).json({categories: result.rows});
   } catch (err) {
-    return res.status(500).json({ error: 'Erreur 500....' });
+    return res.status(500).json({ error: 'Erreur 500....', err });
   }
 });
 

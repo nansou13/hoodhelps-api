@@ -33,6 +33,10 @@ const options = {
       url: 'http://localhost:5100',
       description: 'Development server',
     },
+    {
+      url: 'https://ng13-hoodhelp-api-532352f896c6.herokuapp.com',
+      description: 'Production server',
+    },
   ],
   components: {        
     securitySchemes: {

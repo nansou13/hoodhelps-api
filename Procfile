@@ -1,1 +1,1 @@
-web: origin="http://ng13-postgressql-app.herokuapp.com" node index.js
+web: origin="https://ng13-hoodhelp-api-532352f896c6.herokuapp.com" node index.js

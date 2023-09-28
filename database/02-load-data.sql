@@ -14,24 +14,6 @@ INSERT INTO public.categories (id, name) VALUES
 INSERT INTO public.users (id, username, email, password_hash, first_name, last_name, date_of_birth, date_registered, last_login, is_active, "role") VALUES
 ('fd5d76e2-9958-409c-92a6-55a49199fd72', 'nansou', 'nans@gigan.fr', '$2b$10$6.9Y7OCnpEFpewTk6P212Ojam7liSF.ntn1KrvgDa8T53o59NwZy.', 'Nans', NULL, NULL, '2023-09-18 16:26:55.472824', NULL, 'True', 'user');
 
--- BEGIN TABLE public.categories
--- Inserting 11 rows into public.categories
--- Insert batch #1
-INSERT INTO public.categories (id, name) VALUES
-('4954f51c-1c98-4847-8f1f-53b5de93a139', 'HEALTH_WELLBEING'),
-('0798a2e9-5afd-45b9-94af-447a8c0e72d1', 'LEGAL_FINANCIAL'),
-('557f0135-d165-422c-a932-d4e0871411dd', 'EDUCATION_TRAINING'),
-('a51ce3ce-0d32-4b7b-9980-f5942f2b12bc', 'CRAFTSMANSHIP_CONSTRUCTION'),
-('65e492ff-87b2-48eb-9a98-22884e11853f', 'MAINTENANCE_REPAIR'),
-('9b8e37ea-76eb-4eb3-9aa2-9cbcb7f6f2f4', 'TECHNOLOGY_IT'),
-('c9f70cfa-7487-4b26-a217-74e983bd98b6', 'BEAUTY_STYLE'),
-('3ff884fa-d72e-41ea-873c-f67aa77131a1', 'ANIMAL_SERVICES'),
-('0ca97722-63dd-4123-8fdb-19d47a56c96b', 'GASTRONOMY'),
-('b85d555a-18e2-4e0d-9b72-7ac416980146', 'TRANSPORT_LOGISTICS'),
-('44810f02-4d31-4b68-918d-4f447e97a942', 'REAL_ESTATE');
-
--- END TABLE public.categories
-
 -- BEGIN TABLE public.professions
 -- Inserting 48 rows into public.professions
 -- Insert batch #1

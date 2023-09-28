@@ -459,6 +459,72 @@ router.put('/:id', async (req, res) => {
   }
 });
 
+
+/**
+ * @swagger
+ * /api/groups/code/{id}:
+ *   get:
+ *     summary: Récupère un groupe par son code
+ *     tags:
+ *       - Groupes
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Code du groupe à rechercher
+ *     responses:
+ *       '200':
+ *         description: Succès - Le groupe a été trouvé
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 id:
+ *                   type: integer
+ *                   description: ID du groupe
+ *       '401':
+ *         description: le groupe est inexistant
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   description: Description de l'erreur interne
+ *                 
+ *       '500':
+ *         description: Erreur interne du serveur
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   description: Description de l'erreur interne
+ *                 err:
+ *                   type: string
+ *                   description: Détails de l'erreur
+ */
+router.get('/code/:id', async (req, res) => {
+    const code = req.params.id;
+    try {
+        console.log(code)
+        const result = await pool.query('SELECT id FROM groups WHERE code = $1', [code]);
+        if (result.rowCount !== 1) {
+            return res.status(401).json({ error: 'le groupe nexiste pas' });
+        }
+      return res.status(200).json({id: result.rows[0].id});
+    } catch (err) {
+      return res.status(500).json({ error: 'Erreur 500....', err });
+    }
+  });
+
+
 /**
  * @openapi
  * /api/groups/{id}/user:

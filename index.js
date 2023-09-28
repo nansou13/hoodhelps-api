@@ -66,20 +66,6 @@ app.use('/api/users', userRoutes);
 app.use('/api/categories', categoriesRoutes);
 app.use('/api/groups', groupsRoutes);
 
-
-const sql = "SELECT * FROM categories";
-  pool.query(sql, [], (err, result) => {
-    if (err) {
-      return console.error(err.message);
-    }
-    console.log("test", result.rows);
-  });
-
-
-app.get('/users', (req, res) => {
-  return res.send('GET HTTP method on user resource');
-});
-
 const port = process.env.PORT || 5100;
 http.listen(port, () => {
   console.log(`listening on *:${port}`);

@@ -458,4 +458,65 @@ router.post('/me/job', authenticateToken, async (req, res) => {
     }
 });
 
+/**
+ * @openapi
+ * /api/users/groups:
+ *   get:
+ *     summary: Récupère la liste des groupes lié au user
+ *     description: Récupère la liste des groupes lié au user
+ *     tags:
+ *       - Users
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Affiche un tableau de la liste des groupes
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   id:
+ *                     type: string
+ *                     format: uuid
+ *                   name:
+ *                     type: string
+ *                   code:
+ *                     type: string
+ *                   address:
+ *                     type: string
+ *                   cp:
+ *                     type: string
+ *                   city:
+ *                     type: string
+ *                   description:
+ *                     type: string
+ *                   background_url:
+ *                     type: string
+ *       500:
+ *         description: Erreur inconnue
+ */
+router.get('/groups', authenticateToken, async (req, res) => {
+    try {
+        const userId = req.user.id;
+
+        const query = `
+            SELECT groups.id, groups.name, groups.code, groups.address, groups.cp, groups.city, groups.description, groups.background_url, user_groups.role, user_groups.joined_date
+            FROM groups
+            INNER JOIN user_groups ON groups.id = user_groups.group_id
+            WHERE user_groups.user_id = $1
+        `;
+        
+        const result = await pool.query(query, [userId]);
+        
+
+        res.status(200).json(result.rows);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Erreur lors de la mise à jour' });
+    }
+});
+
 module.exports = router;

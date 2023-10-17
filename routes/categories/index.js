@@ -1,14 +1,18 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const pool = require('../../db');
-const {authenticateToken, generateAccessToken, generateRefreshToken} = require('../../token')
+const pool = require("../../db");
+const {
+  authenticateToken,
+  generateAccessToken,
+  generateRefreshToken,
+} = require("../../token");
 
 /**
  * @openapi
  * /api/categories/:
  *   get:
- *     summary: Liste toutes les categories 
- *     description: Liste toutes les categories 
+ *     summary: Liste toutes les categories
+ *     description: Liste toutes les categories
  *     tags:
  *       - Categories
  *     responses:
@@ -32,16 +36,14 @@ const {authenticateToken, generateAccessToken, generateRefreshToken} = require('
  *       500:
  *         description: Erreur inconnue
  */
-router.get('/', async (req, res) => {
-    
+router.get("/", async (req, res) => {
   try {
-    const result = await pool.query('SELECT * FROM categories');
-    return res.status(200).json({categories: result.rows});
+    const result = await pool.query("SELECT * FROM categories");
+    return res.status(200).json({ categories: result.rows });
   } catch (err) {
-    return res.status(500).json({ error: 'Erreur 500....', err });
+    return res.status(500).json({ error: "Erreur 500....", err });
   }
 });
-
 
 /**
  * @openapi
@@ -77,10 +79,9 @@ router.get('/', async (req, res) => {
  *       500:
  *         description: Erreur inconnue
  */
-router.get('/:category_id', async (req, res) => {
-    
+router.get("/:category_id", async (req, res) => {
   try {
-    const categoryID = req.params.category_id
+    const categoryID = req.params.category_id;
     const query = `
     SELECT
       id,
@@ -92,10 +93,9 @@ router.get('/:category_id', async (req, res) => {
     const result = await pool.query(query, [categoryID]);
     return res.status(200).json(result.rows);
   } catch (err) {
-    return res.status(500).json({ error: 'Erreur d\'inscription', err });
+    return res.status(500).json({ error: "Erreur d'inscription", err });
   }
 });
-
 
 /**
  * @openapi
@@ -119,38 +119,36 @@ router.get('/:category_id', async (req, res) => {
  *         content:
  *           application/json:
  *             schema:
- *               type: object
- *               properties:
- *                 categories:
- *                   type: array
- *                   items:
- *                      type: object
- *                      properties:
- *                          id:
- *                              type: string
- *                              format: uuid
- *                          name:
- *                              type: string
- *                          professions_list:
- *                              type: array
- *                              items:
- *                                  type: object
- *                                  properties:
- *                                      id: 
- *                                          type: string
- *                                          format: uuid
- *                                      name:
- *                                          type: string
- *                                      user_count:
- *                                          type: integer
+ *                type: array
+ *                items:
+ *                   type: object
+ *                   properties:
+ *                      id:
+ *                          type: string
+ *                          format: uuid
+ *                      name:
+ *                          type: string
+ *                      users:
+ *                          type: integer
+ *                      professions_list:
+ *                          type: array
+ *                          items:
+ *                              type: object
+ *                              properties:
+ *                                  id:
+ *                                      type: string
+ *                                      format: uuid
+ *                                  name:
+ *                                      type: string
+ *                                  user_count:
+ *                                      type: integer
  *       500:
  *         description: Erreur inconnue
  */
-router.get('/group/:group_id', async (req, res) => {
-    
-    try {
-      const groupId = req.params.group_id
-      const query = `
+router.get("/group/:group_id", async (req, res) => {
+  try {
+    const groupId = req.params.group_id;
+    const query = `
       SELECT
         c.id,
         c.name,
@@ -172,12 +170,12 @@ router.get('/group/:group_id', async (req, res) => {
       GROUP BY c.id, c.name;
     `;
 
-      const result = await pool.query(query, [groupId]);
-      return res.status(200).json({categories: result.rows});
-    } catch (err) {
-      return res.status(500).json({ error: 'Erreur d\'inscription' });
-    }
-  });
+    const result = await pool.query(query, [groupId]);
+    return res.status(200).json(result.rows);
+  } catch (err) {
+    return res.status(500).json({ error: "Erreur d'inscription" });
+  }
+});
 
 /**
  * @openapi
@@ -222,22 +220,26 @@ router.get('/group/:group_id', async (req, res) => {
  *       500:
  *         description: Erreur inconnue
  */
-router.post('/:id/', async (req, res) => {
-    try {
-        const id = req.params.id;
-        //check si ID exist dans les catégories
-        const exist = await pool.query("SELECT * FROM categories WHERE id = $1", [id]);
-        if (exist.rowCount === 0) {
-            return res.status(404).json({ error: 'Categorie non trouvée' });
-        }
-
-        const newJob = await pool.query('INSERT INTO professions (name, category_id) VALUES ($1, $2) RETURNING id', [req.body.profession_name, id]);
-        return res.status(201).json({ profession_id: newJob.rows[0].id });
-
-    } catch (err) {
-      res.status(500).json({ error: 'Categorie non trouvée' });
+router.post("/:id/", async (req, res) => {
+  try {
+    const id = req.params.id;
+    //check si ID exist dans les catégories
+    const exist = await pool.query("SELECT * FROM categories WHERE id = $1", [
+      id,
+    ]);
+    if (exist.rowCount === 0) {
+      return res.status(404).json({ error: "Categorie non trouvée" });
     }
-  });
+
+    const newJob = await pool.query(
+      "INSERT INTO professions (name, category_id) VALUES ($1, $2) RETURNING id",
+      [req.body.profession_name, id]
+    );
+    return res.status(201).json({ profession_id: newJob.rows[0].id });
+  } catch (err) {
+    res.status(500).json({ error: "Categorie non trouvée" });
+  }
+});
 
 /**
  * @openapi
@@ -283,16 +285,20 @@ router.post('/:id/', async (req, res) => {
  *       500:
  *         description: Erreur inconnue
  */
-router.get('/:id', async (req, res) => {
-    try {
-        const id = req.params.id;
-        const result = await pool.query("SELECT categories.id, categories.name, ARRAY_AGG(jsonb_build_object('id', professions.id, 'name', professions.name)) AS professions_list FROM categories LEFT JOIN professions ON categories.id = professions.category_id WHERE categories.id = $1 GROUP BY categories.id, categories.name;",[id]);
-        
-        if(result.rowCount === 0) return res.status(404).json({ error: 'categorie inexistante' });
-        return res.status(200).json(result.rows[0]);
-      } catch (err) {
-        return res.status(500).json({ error: 'Erreur d\'inscription' });
-      }
+router.get("/:id", async (req, res) => {
+  try {
+    const id = req.params.id;
+    const result = await pool.query(
+      "SELECT categories.id, categories.name, ARRAY_AGG(jsonb_build_object('id', professions.id, 'name', professions.name)) AS professions_list FROM categories LEFT JOIN professions ON categories.id = professions.category_id WHERE categories.id = $1 GROUP BY categories.id, categories.name;",
+      [id]
+    );
+
+    if (result.rowCount === 0)
+      return res.status(404).json({ error: "categorie inexistante" });
+    return res.status(200).json(result.rows[0]);
+  } catch (err) {
+    return res.status(500).json({ error: "Erreur d'inscription" });
+  }
 });
 
 /**
@@ -328,40 +334,40 @@ router.get('/:id', async (req, res) => {
  *               items:
  *                  type: object
  *                  properties:
- *                      id: 
+ *                      id:
  *                          type: string
  *                          format: uuid
- *                      username: 
+ *                      username:
  *                          type: string
- *                      email: 
+ *                      email:
  *                          type: string
  *                          format: email
- *                      first_name: 
+ *                      first_name:
  *                          type: string
- *                      last_name: 
+ *                      last_name:
  *                          type: string
- *                      date_of_birth: 
+ *                      date_of_birth:
  *                          type: string
  *                          format: date
- *                      date_registered: 
+ *                      date_registered:
  *                          type: string
  *                          format: date-time
- *                      last_login: 
+ *                      last_login:
  *                          type: string
  *                          format: date-time
- *                      is_active: 
+ *                      is_active:
  *                          type: boolean
- *                      role: 
+ *                      role:
  *                          type: string
  *                          enum:
  *                              - "user"
  *                              - "admin"
- *                      phone_number: 
+ *                      phone_number:
  *                          type: string
  *       500:
  *         description: Erreur inconnue
  */
-router.get('/:groupId/jobs/:professionId/users', async (req, res) => {
+router.get("/:groupId/jobs/:professionId/users", async (req, res) => {
   try {
     const groupId = req.params.groupId;
     const professionId = req.params.professionId;
@@ -393,7 +399,7 @@ router.get('/:groupId/jobs/:professionId/users', async (req, res) => {
     res.status(200).json(result.rows);
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: 'Erreur serveur' });
+    res.status(500).json({ error: "Erreur serveur" });
   }
 });
 

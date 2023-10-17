@@ -154,6 +154,7 @@ router.get('/group/:group_id', async (req, res) => {
       SELECT
         c.id,
         c.name,
+        SUM(COALESCE(u.user_count, 0)) AS users,
         jsonb_agg(jsonb_build_object(
           'profession_id', p.id,
           'profession_name', p.name,

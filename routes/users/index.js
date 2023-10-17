@@ -174,7 +174,7 @@ router.post('/login', async (req, res) => {
         }
 
         bcrypt.compare(req.body.password, result.rows[0].password_hash, function (err, isMatch) {
-            if (err) {
+            if (err || !isMatch) {
                 return res.status(403).json({ error: 'access denied' });
             }
             if (isMatch) {

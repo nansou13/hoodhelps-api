@@ -381,7 +381,13 @@ router.put('/me', authenticateToken, async (req, res) => {
             return res.status(404).json({ error: 'Utilisateur non trouvé' });
         }
 
-        res.status(200).json({message: 'Updated'});
+        const userResult = result.rows[0]
+        delete userResult.password_hash;
+
+        const accessToken = generateAccessToken(userResult);
+        const refreshToken = generateRefreshToken(userResult);
+
+        res.status(200).json({ user: userResult, accessToken, refreshToken });
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: 'Erreur lors de la mise à jour' });

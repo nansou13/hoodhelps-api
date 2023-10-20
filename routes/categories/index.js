@@ -349,6 +349,8 @@ router.get("/:id", async (req, res) => {
  *                      date_of_birth:
  *                          type: string
  *                          format: date
+ *                      image_url:
+ *                          type: string
  *                      date_registered:
  *                          type: string
  *                          format: date-time
@@ -384,6 +386,7 @@ router.get("/:groupId/jobs/:professionId/users", async (req, res) => {
         users.last_name,
         users.date_of_birth,
         users.date_registered,
+        users.image_url,
         users.last_login,
         users.is_active,
         users.role,

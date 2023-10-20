@@ -51,6 +51,8 @@ const {authenticateToken, generateAccessToken, generateRefreshToken} = require('
  *                          type: string
  *                      last_name: 
  *                          type: string
+ *                      image_url:
+ *                          type: string
  *                      date_of_birth: 
  *                          type: string
  *                          format: date
@@ -136,6 +138,8 @@ router.post('/register', async (req, res) => {
  *                      first_name: 
  *                          type: string
  *                      last_name: 
+ *                          type: string
+ *                      image_url:
  *                          type: string
  *                      date_of_birth: 
  *                          type: string
@@ -225,6 +229,8 @@ router.post('/login', async (req, res) => {
 *                          type: string
 *                      last_name: 
 *                          type: string
+*                      image_url:
+*                          type: string
 *                      date_of_birth: 
 *                          type: string
 *                          format: date
@@ -305,6 +311,8 @@ router.get('/me', authenticateToken, async (req, res) => {
  *                   type: string
  *                 last_name:
  *                   type: string
+ *                 image_url:
+ *                   type: string
  *                 date_of_birth:
  *                   type: string
  *                   format: date
@@ -381,7 +389,7 @@ router.put('/me', authenticateToken, async (req, res) => {
 
         const query = `UPDATE users SET ${fields.join(', ')} WHERE id = $${counter} RETURNING *`;
         values.push(userId);
-        
+
         const result = await pool.query(query, values);
 
         if (result.rowCount === 0) {

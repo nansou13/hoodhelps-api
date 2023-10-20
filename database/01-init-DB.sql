@@ -22,6 +22,7 @@ CREATE TABLE users (
     first_name VARCHAR(100),
     last_name VARCHAR(100),
     phone_number VARCHAR(100),
+    image_url VARCHAR(255),
     date_of_birth DATE,
     date_registered TIMESTAMP DEFAULT current_timestamp,
     last_login TIMESTAMP,

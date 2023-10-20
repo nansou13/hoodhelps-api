@@ -278,6 +278,8 @@ router.get('/me', authenticateToken, async (req, res) => {
  *                 type: string
  *               last_name:
  *                 type: string
+ *               image_url:
+ *                 type: string
  *             example:
  *               username: john_doe
  *               email: john.doe@example.com
@@ -331,7 +333,7 @@ router.get('/me', authenticateToken, async (req, res) => {
 router.put('/me', authenticateToken, async (req, res) => {
     try {
         const userId = req.user.id;
-        const { username, email, first_name, last_name, date_of_birth, phone_number } = req.body;
+        const { username, email, first_name, last_name, date_of_birth, phone_number, image_url } = req.body;
 
         let fields = [];
         let values = [];
@@ -357,6 +359,11 @@ router.put('/me', authenticateToken, async (req, res) => {
             values.push(last_name);
             counter++;
         }
+        if (image_url) {
+            fields.push(`image_url = $${counter}`);
+            values.push(image_url);
+            counter++;
+        }
         if (date_of_birth) {
             fields.push(`date_of_birth = $${counter}`);
             values.push(date_of_birth);
@@ -374,7 +381,7 @@ router.put('/me', authenticateToken, async (req, res) => {
 
         const query = `UPDATE users SET ${fields.join(', ')} WHERE id = $${counter} RETURNING *`;
         values.push(userId);
-
+        
         const result = await pool.query(query, values);
 
         if (result.rowCount === 0) {

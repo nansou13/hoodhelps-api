@@ -1,11 +1,14 @@
-const express = require('express');
-const bcrypt = require('bcrypt');
-const jwt = require('jsonwebtoken');
-const { Pool } = require('pg');
+const express = require("express");
+const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
+const { Pool } = require("pg");
 const router = express.Router();
-const pool = require('../../db');
-const {authenticateToken, generateAccessToken, generateRefreshToken} = require('../../token')
-
+const pool = require("../../db");
+const {
+  authenticateToken,
+  generateAccessToken,
+  generateRefreshToken,
+} = require("../../token");
 
 /**
  * @openapi
@@ -13,7 +16,7 @@ const {authenticateToken, generateAccessToken, generateRefreshToken} = require('
  *   post:
  *     summary: Create a new user
  *     description: Create a new user
- *     tags: 
+ *     tags:
  *          - Users
  *     requestBody:
  *       required: true
@@ -39,37 +42,37 @@ const {authenticateToken, generateAccessToken, generateRefreshToken} = require('
  *                 user:
  *                   type: object
  *                   properties:
- *                      id: 
+ *                      id:
  *                          type: string
  *                          format: uuid
- *                      username: 
+ *                      username:
  *                          type: string
- *                      email: 
+ *                      email:
  *                          type: string
  *                          format: email
- *                      first_name: 
+ *                      first_name:
  *                          type: string
- *                      last_name: 
+ *                      last_name:
  *                          type: string
  *                      image_url:
  *                          type: string
- *                      date_of_birth: 
+ *                      date_of_birth:
  *                          type: string
  *                          format: date
- *                      date_registered: 
+ *                      date_registered:
  *                          type: string
  *                          format: date-time
- *                      last_login: 
+ *                      last_login:
  *                          type: string
  *                          format: date-time
- *                      is_active: 
+ *                      is_active:
  *                          type: boolean
- *                      role: 
+ *                      role:
  *                          type: string
  *                          enum:
  *                              - "user"
  *                              - "admin"
- *                      phone_number: 
+ *                      phone_number:
  *                          type: string
  *                 accessToken:
  *                    type: string
@@ -78,19 +81,21 @@ const {authenticateToken, generateAccessToken, generateRefreshToken} = require('
  *       500:
  *         description: Erreur lors de l'inscription
  */
-router.post('/register', async (req, res) => {
-    
+router.post("/register", async (req, res) => {
   try {
     const hashedPassword = await bcrypt.hash(req.body.password, 10);
-    const result = await pool.query('INSERT INTO users (username, email, password_hash) VALUES ($1, $2, $3) RETURNING *', [req.body.username, req.body.email, hashedPassword]);
-    const userResult = result.rows[0]
+    const result = await pool.query(
+      "INSERT INTO users (username, email, password_hash) VALUES ($1, $2, $3) RETURNING *",
+      [req.body.username, req.body.email, hashedPassword]
+    );
+    const userResult = result.rows[0];
     delete userResult.password_hash;
 
     const accessToken = generateAccessToken(userResult);
     const refreshToken = generateRefreshToken(userResult);
     res.status(201).json({ user: userResult, accessToken, refreshToken });
   } catch (err) {
-    res.status(500).json({ error: 'Registration error' });
+    res.status(500).json({ error: "Registration error" });
   }
 });
 
@@ -100,7 +105,7 @@ router.post('/register', async (req, res) => {
  *   post:
  *     summary: login to the application
  *     description: login to the application
- *     tags: 
+ *     tags:
  *          - Users
  *     requestBody:
  *       required: true
@@ -127,37 +132,37 @@ router.post('/register', async (req, res) => {
  *                 user:
  *                   type: object
  *                   properties:
- *                      id: 
+ *                      id:
  *                          type: string
  *                          format: uuid
- *                      username: 
+ *                      username:
  *                          type: string
- *                      email: 
+ *                      email:
  *                          type: string
  *                          format: email
- *                      first_name: 
+ *                      first_name:
  *                          type: string
- *                      last_name: 
+ *                      last_name:
  *                          type: string
  *                      image_url:
  *                          type: string
- *                      date_of_birth: 
+ *                      date_of_birth:
  *                          type: string
  *                          format: date
- *                      date_registered: 
+ *                      date_registered:
  *                          type: string
  *                          format: date-time
- *                      last_login: 
+ *                      last_login:
  *                          type: string
  *                          format: date-time
- *                      is_active: 
+ *                      is_active:
  *                          type: boolean
- *                      role: 
+ *                      role:
  *                          type: string
  *                          enum:
  *                              - "user"
  *                              - "admin"
- *                      phone_number: 
+ *                      phone_number:
  *                          type: string
  *                 accessToken:
  *                    type: string
@@ -168,36 +173,40 @@ router.post('/register', async (req, res) => {
  *       500:
  *         description: unknown error
  */
-router.post('/login', async (req, res) => {
-    try {
-        const username = req.body.username
-        const result = await pool.query("SELECT * FROM users WHERE username = $1", [username]);
-      
-        if (result.rowCount !== 1) {
-            return res.status(403).json({ error: 'access denied' });
-        }
+router.post("/login", async (req, res) => {
+  try {
+    const username = req.body.username;
+    const result = await pool.query("SELECT * FROM users WHERE username = $1", [
+      username,
+    ]);
 
-        bcrypt.compare(req.body.password, result.rows[0].password_hash, function (err, isMatch) {
-            if (err || !isMatch) {
-                return res.status(403).json({ error: 'access denied' });
-            }
-            if (isMatch) {
-                const userResult = result.rows[0]
-                delete userResult.password_hash;
-
-                const accessToken = generateAccessToken(userResult);
-                const refreshToken = generateRefreshToken(userResult);
-
-                
-                return res.json({ user: userResult, accessToken, refreshToken });
-            }
-        });
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: 'Erreur...500...' });
+    if (result.rowCount !== 1) {
+      return res.status(403).json({ error: "access denied" });
     }
-});
 
+    bcrypt.compare(
+      req.body.password,
+      result.rows[0].password_hash,
+      function (err, isMatch) {
+        if (err || !isMatch) {
+          return res.status(403).json({ error: "access denied" });
+        }
+        if (isMatch) {
+          const userResult = result.rows[0];
+          delete userResult.password_hash;
+
+          const accessToken = generateAccessToken(userResult);
+          const refreshToken = generateRefreshToken(userResult);
+
+          return res.json({ user: userResult, accessToken, refreshToken });
+        }
+      }
+    );
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Erreur...500..." });
+  }
+});
 
 /**
  * @openapi
@@ -253,10 +262,9 @@ router.post('/login', async (req, res) => {
  *         description: Error Unauthorized
 
  */
-router.get('/me', authenticateToken, async (req, res) => {
-    return res.send(req.user);
+router.get("/me", authenticateToken, async (req, res) => {
+  return res.send(req.user);
 });
-
 
 /**
  * @openapi
@@ -338,75 +346,85 @@ router.get('/me', authenticateToken, async (req, res) => {
  *       500:
  *         description: Erreur inconnue
  */
-router.put('/me', authenticateToken, async (req, res) => {
-    try {
-        const userId = req.user.id;
-        const { username, email, first_name, last_name, date_of_birth, phone_number, image_url } = req.body;
+router.put("/me", authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const {
+      username,
+      email,
+      first_name,
+      last_name,
+      date_of_birth,
+      phone_number,
+      image_url,
+    } = req.body;
 
-        let fields = [];
-        let values = [];
-        let counter = 1;
+    let fields = [];
+    let values = [];
+    let counter = 1;
 
-        if (username) {
-            fields.push(`username = $${counter}`);
-            values.push(username);
-            counter++;
-        }
-        if (email) {
-            fields.push(`email = $${counter}`);
-            values.push(email);
-            counter++;
-        }
-        if (first_name) {
-            fields.push(`first_name = $${counter}`);
-            values.push(first_name);
-            counter++;
-        }
-        if (last_name) {
-            fields.push(`last_name = $${counter}`);
-            values.push(last_name);
-            counter++;
-        }
-        if (image_url) {
-            fields.push(`image_url = $${counter}`);
-            values.push(image_url);
-            counter++;
-        }
-        if (date_of_birth) {
-            fields.push(`date_of_birth = $${counter}`);
-            values.push(date_of_birth);
-            counter++;
-        }
-        if (phone_number) {
-            fields.push(`phone_number = $${counter}`);
-            values.push(phone_number);
-            counter++;
-        }
-
-        if (fields.length === 0) {
-            return res.status(204).json({ message: 'Aucun champ à mettre à jour' });
-        }
-
-        const query = `UPDATE users SET ${fields.join(', ')} WHERE id = $${counter} RETURNING *`;
-        values.push(userId);
-
-        const result = await pool.query(query, values);
-
-        if (result.rowCount === 0) {
-            return res.status(404).json({ error: 'Utilisateur non trouvé' });
-        }
-
-        const userResult = result.rows[0]
-        delete userResult.password_hash;
-
-        const accessToken = generateAccessToken(userResult);
-        const refreshToken = generateRefreshToken(userResult);
-
-        res.status(200).json({ user: userResult, accessToken, refreshToken });
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: 'Erreur lors de la mise à jour' });
+    if (username) {
+      fields.push(`username = $${counter}`);
+      values.push(username);
+      counter++;
     }
+    if (email) {
+      fields.push(`email = $${counter}`);
+      values.push(email);
+      counter++;
+    }
+    if (first_name) {
+      fields.push(`first_name = $${counter}`);
+      values.push(first_name);
+      counter++;
+    }
+    if (last_name) {
+      fields.push(`last_name = $${counter}`);
+      values.push(last_name);
+      counter++;
+    }
+    if (image_url) {
+      fields.push(`image_url = $${counter}`);
+      values.push(image_url);
+      counter++;
+    }
+    if (date_of_birth) {
+      fields.push(`date_of_birth = $${counter}`);
+      values.push(date_of_birth);
+      counter++;
+    }
+    if (phone_number) {
+      fields.push(`phone_number = $${counter}`);
+      values.push(phone_number);
+      counter++;
+    }
+
+    if (fields.length === 0) {
+      return res.status(204).json({ message: "Aucun champ à mettre à jour" });
+    }
+
+    const query = `UPDATE users SET ${fields.join(
+      ", "
+    )} WHERE id = $${counter} RETURNING *`;
+    values.push(userId);
+
+    const result = await pool.query(query, values);
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({ error: "Utilisateur non trouvé" });
+    }
+
+    const userResult = result.rows[0];
+    delete userResult.password_hash;
+
+    const accessToken = generateAccessToken(userResult);
+    const refreshToken = generateRefreshToken(userResult);
+
+    res.status(200).json({ user: userResult, accessToken, refreshToken });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Erreur lors de la mise à jour" });
+  }
 });
 
 /**
@@ -457,27 +475,163 @@ router.put('/me', authenticateToken, async (req, res) => {
  *         description: Erreur inconnue
  */
 
-router.post('/me/job', authenticateToken, async (req, res) => {
-    try {
-        const user_id = req.user.id;
-        const { profession_id, description, experience_years } = req.body;
+router.post("/me/job", authenticateToken, async (req, res) => {
+  try {
+    const user_id = req.user.id;
+    const { profession_id, description, experience_years } = req.body;
 
-        // Assurez-vous de valider les données ici avant de les insérer dans la base de données
+    // Assurez-vous de valider les données ici avant de les insérer dans la base de données
 
-        const query = `
+    const query = `
             INSERT INTO user_professions (user_id, profession_id, description, experience_years) 
             VALUES ($1, $2, $3, $4)
             RETURNING *;  -- retourne les données insérées
         `;
 
-        const result = await pool.query(query, [user_id, profession_id, description, experience_years]);
+    const result = await pool.query(query, [
+      user_id,
+      profession_id,
+      description,
+      experience_years,
+    ]);
 
-        res.status(201).json(result.rows[0]); // Retourne les données insérées
-    } catch (err) {
-        console.error(err);
-        res.status(500).send('Erreur serveur');
-    }
+    res.status(201).json(result.rows[0]); // Retourne les données insérées
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Erreur serveur");
+  }
 });
+
+/**
+ * @openapi
+ * /api/users/me/job:
+ *   get:
+ *     summary: récuperer les job d'un utilisateur
+ *     description: récuperer les job d'un utilisateur
+ *     tags:
+ *       - Users
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *        - in: query
+ *          name: without
+ *          schema:
+ *            type: string
+ *            format: uuid 
+ *            description: remove a job in the list
+ *     responses:
+ *       200:
+ *         description: tableau de jobs
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   user_id:
+ *                     type: string
+ *                     format: uuid
+ *                   profession_id:
+ *                     type: string
+ *                     format: uuid
+ *                   description:
+ *                     type: string
+ *                   experience_years:
+ *                     type: integer
+ *       500:
+ *         description: Erreur inconnue
+ */
+
+
+router.get("/me/job", authenticateToken, async (req, res) => {
+  try {
+    const user_id = req.user.id;
+    const withoutProfessionId = req.query.without;
+
+    let query = `
+            SELECT * FROM user_professions
+            WHERE user_id = $1 
+        `;
+    
+    const queryParams = [user_id];
+
+    if (withoutProfessionId) {
+        query += `AND profession_id != $2`;
+        queryParams.push(withoutProfessionId);
+    }
+
+    const result = await pool.query(query, queryParams);
+
+    res.status(200).json(result.rows); // Retourne les données insérées
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Erreur serveur");
+  }
+});
+
+/**
+ * @openapi
+ * /api/users/me/job/{id}:
+ *   get:
+ *     summary: récuperer le job d'un utilisateur via son id
+ *     description: récuperer le job d'un utilisateur via son id
+ *     tags:
+ *       - Users
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         description: ID du job
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     responses:
+ *       200:
+ *         description: valeurs du job
+ *         content:
+ *           application/json:
+ *             schema:
+ *                 type: object
+ *                 properties:
+ *                   user_id:
+ *                     type: string
+ *                     format: uuid
+ *                   profession_id:
+ *                     type: string
+ *                     format: uuid
+ *                   description:
+ *                     type: string
+ *                   experience_years:
+ *                     type: integer
+ *       500:
+ *         description: Erreur inconnue
+ */
+
+
+router.get("/me/job/:id", authenticateToken, async (req, res) => {
+    try {
+      const user_id = req.user.id;
+      const job_id = req.params.id;
+  
+      let query = `
+              SELECT * FROM user_professions
+              WHERE user_id = $1 
+              AND profession_id = $2
+          `;
+      
+      const queryParams = [user_id, job_id];
+  
+      const result = await pool.query(query, queryParams);
+  
+      res.status(200).json(result.rows[0]); // Retourne les données insérées
+    } catch (err) {
+      console.error(err);
+      res.status(500).send("Erreur serveur");
+    }
+  });
 
 /**
  * @openapi
@@ -519,25 +673,25 @@ router.post('/me/job', authenticateToken, async (req, res) => {
  *       500:
  *         description: Erreur inconnue
  */
-router.get('/groups', authenticateToken, async (req, res) => {
-    try {
-        const userId = req.user.id;
+router.get("/groups", authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const withoutProfessionId = req.query.without; 
 
-        const query = `
+    const query = `
             SELECT groups.id, groups.name, groups.code, groups.address, groups.cp, groups.city, groups.description, groups.background_url, user_groups.role, user_groups.joined_date
             FROM groups
             INNER JOIN user_groups ON groups.id = user_groups.group_id
             WHERE user_groups.user_id = $1
         `;
         
-        const result = await pool.query(query, [userId]);
-        
+    const result = await pool.query(query, [userId]);
 
-        res.status(200).json(result.rows);
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: 'Erreur lors de la mise à jour' });
-    }
+    res.status(200).json(result.rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Erreur lors de la mise à jour" });
+  }
 });
 
 module.exports = router;

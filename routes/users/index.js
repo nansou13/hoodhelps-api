@@ -4,6 +4,7 @@ const jwt = require("jsonwebtoken");
 const { Pool } = require("pg");
 const router = express.Router();
 const pool = require("../../db");
+const { HTTP_STATUS } = require("../../constants");
 const {
   authenticateToken,
   generateAccessToken,
@@ -82,6 +83,19 @@ const {
  *         description: Erreur lors de l'inscription
  */
 router.post("/register", async (req, res) => {
+  // Schema de validation Joi pour les paramètres du chemin
+  const validations = createJoiSchema({
+    username: { type: "string", required: true },
+    email: { type: "string", required: true, email: true },
+    password: { type: "string", required: true },
+  });
+
+  const { error } = validations.validate(req.body);
+
+  if (error) {
+    return res.status(HTTP_STATUS.BAD_REQUEST).json(error.details[0].message);
+  }
+
   try {
     const hashedPassword = await bcrypt.hash(req.body.password, 10);
     const result = await pool.query(
@@ -93,9 +107,13 @@ router.post("/register", async (req, res) => {
 
     const accessToken = generateAccessToken(userResult);
     const refreshToken = generateRefreshToken(userResult);
-    res.status(201).json({ user: userResult, accessToken, refreshToken });
+    res
+      .status(HTTP_STATUS.CREATED)
+      .json({ user: userResult, accessToken, refreshToken });
   } catch (err) {
-    res.status(500).json({ error: "Registration error" });
+    res
+      .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+      .json({ error: "Registration error" });
   }
 });
 
@@ -174,6 +192,18 @@ router.post("/register", async (req, res) => {
  *         description: unknown error
  */
 router.post("/login", async (req, res) => {
+  // Schema de validation Joi pour les paramètres du chemin
+  const validations = createJoiSchema({
+    username: { type: "string", required: true },
+    password: { type: "string", required: true },
+  });
+
+  const { error } = validations.validate(req.body);
+
+  if (error) {
+    return res.status(HTTP_STATUS.BAD_REQUEST).json(error.details[0].message);
+  }
+
   try {
     const username = req.body.username;
     const result = await pool.query("SELECT * FROM users WHERE username = $1", [
@@ -181,7 +211,7 @@ router.post("/login", async (req, res) => {
     ]);
 
     if (result.rowCount !== 1) {
-      return res.status(403).json({ error: "access denied" });
+      return res.status(HTTP_STATUS.FORBIDDEN).json({ error: "access denied" });
     }
 
     bcrypt.compare(
@@ -189,7 +219,9 @@ router.post("/login", async (req, res) => {
       result.rows[0].password_hash,
       function (err, isMatch) {
         if (err || !isMatch) {
-          return res.status(403).json({ error: "access denied" });
+          return res
+            .status(HTTP_STATUS.FORBIDDEN)
+            .json({ error: "access denied" });
         }
         if (isMatch) {
           const userResult = result.rows[0];
@@ -204,7 +236,9 @@ router.post("/login", async (req, res) => {
     );
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: "Erreur...500..." });
+    res
+      .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+      .json({ error: "Erreur...500..." });
   }
 });
 
@@ -347,6 +381,28 @@ router.get("/me", authenticateToken, async (req, res) => {
  *         description: Erreur inconnue
  */
 router.put("/me", authenticateToken, async (req, res) => {
+  // Schema de validation Joi pour les paramètres du chemin
+  const validations = createJoiSchema({
+    email: { type: "string", email: true },
+    username: { type: "string" },
+    first_name: { type: "string" },
+    last_name: { type: "string" },
+    image_url: {
+      type: "string",
+      pattern:
+        "^(https?:\\/\\/)?([\\da-z.-]+)\\.([a-z.]{2,6})([\\/\\w .-]*)*\\/?$",
+      description: "URL de l'image de profil",
+    },
+    date_of_birth: { type: "string", pattern: "^[0-9]{4}-[0-9]{2}-[0-9]{2}$" }, // Format YYYY-MM-DD
+    phone_number: { type: "string", pattern: "^[0-9]+$" }, // Only numbers allowed
+  });
+
+  const { error } = validations.validate(req.body);
+
+  if (error) {
+    return res.status(HTTP_STATUS.BAD_REQUEST).json(error.details[0].message);
+  }
+
   try {
     const userId = req.user.id;
     const {
@@ -400,7 +456,9 @@ router.put("/me", authenticateToken, async (req, res) => {
     }
 
     if (fields.length === 0) {
-      return res.status(204).json({ message: "Aucun champ à mettre à jour" });
+      return res
+        .status(HTTP_STATUS.NOCONTENT)
+        .json({ message: "Aucun champ à mettre à jour" });
     }
 
     const query = `UPDATE users SET ${fields.join(
@@ -411,7 +469,9 @@ router.put("/me", authenticateToken, async (req, res) => {
     const result = await pool.query(query, values);
 
     if (result.rowCount === 0) {
-      return res.status(404).json({ error: "Utilisateur non trouvé" });
+      return res
+        .status(HTTP_STATUS.NOT_FOUND)
+        .json({ error: "Utilisateur non trouvé" });
     }
 
     const userResult = result.rows[0];
@@ -420,10 +480,14 @@ router.put("/me", authenticateToken, async (req, res) => {
     const accessToken = generateAccessToken(userResult);
     const refreshToken = generateRefreshToken(userResult);
 
-    res.status(200).json({ user: userResult, accessToken, refreshToken });
+    res
+      .status(HTTP_STATUS.OK)
+      .json({ user: userResult, accessToken, refreshToken });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: "Erreur lors de la mise à jour" });
+    res
+      .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+      .json({ error: "Erreur lors de la mise à jour" });
   }
 });
 
@@ -476,6 +540,19 @@ router.put("/me", authenticateToken, async (req, res) => {
  */
 
 router.post("/me/job", authenticateToken, async (req, res) => {
+  // Schema de validation Joi pour les paramètres du chemin
+  const validations = createJoiSchema({
+    profession_id: { type: "uuid", required: true },
+    description: { type: "string" },
+    experience_years: { type: "number" },
+  });
+
+  const { error } = validations.validate(req.body);
+
+  if (error) {
+    return res.status(HTTP_STATUS.BAD_REQUEST).json(error.details[0].message);
+  }
+
   try {
     const user_id = req.user.id;
     const { profession_id, description, experience_years } = req.body;
@@ -495,10 +572,10 @@ router.post("/me/job", authenticateToken, async (req, res) => {
       experience_years,
     ]);
 
-    res.status(201).json(result.rows[0]); // Retourne les données insérées
+    res.status(HTTP_STATUS.CREATED).json(result.rows[0]); // Retourne les données insérées
   } catch (err) {
     console.error(err);
-    res.status(500).send("Erreur serveur");
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).send("Erreur serveur");
   }
 });
 
@@ -517,7 +594,7 @@ router.post("/me/job", authenticateToken, async (req, res) => {
  *          name: without
  *          schema:
  *            type: string
- *            format: uuid 
+ *            format: uuid
  *            description: remove a job in the list
  *     responses:
  *       200:
@@ -543,7 +620,6 @@ router.post("/me/job", authenticateToken, async (req, res) => {
  *         description: Erreur inconnue
  */
 
-
 router.get("/me/job", authenticateToken, async (req, res) => {
   try {
     const user_id = req.user.id;
@@ -553,20 +629,20 @@ router.get("/me/job", authenticateToken, async (req, res) => {
             SELECT * FROM user_professions
             WHERE user_id = $1 
         `;
-    
+
     const queryParams = [user_id];
 
     if (withoutProfessionId) {
-        query += `AND profession_id != $2`;
-        queryParams.push(withoutProfessionId);
+      query += `AND profession_id != $2`;
+      queryParams.push(withoutProfessionId);
     }
 
     const result = await pool.query(query, queryParams);
 
-    res.status(200).json(result.rows); // Retourne les données insérées
+    res.status(HTTP_STATUS.OK).json(result.rows); // Retourne les données insérées
   } catch (err) {
     console.error(err);
-    res.status(500).send("Erreur serveur");
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).send("Erreur serveur");
   }
 });
 
@@ -609,29 +685,37 @@ router.get("/me/job", authenticateToken, async (req, res) => {
  *       500:
  *         description: Erreur inconnue
  */
-
-
 router.get("/me/job/:id", authenticateToken, async (req, res) => {
-    try {
-      const user_id = req.user.id;
-      const job_id = req.params.id;
-  
-      let query = `
+  // Schema de validation Joi pour les paramètres du chemin
+  const validations = createJoiSchema({
+    id: { type: "uuid", required: true },
+  });
+  const { error } = validations.validate(req.params);
+
+  if (error) {
+    return res.status(HTTP_STATUS.BAD_REQUEST).json(error.details[0].message);
+  }
+
+  try {
+    const user_id = req.user.id;
+    const job_id = req.params.id;
+
+    let query = `
               SELECT * FROM user_professions
               WHERE user_id = $1 
               AND profession_id = $2
           `;
-      
-      const queryParams = [user_id, job_id];
-  
-      const result = await pool.query(query, queryParams);
-  
-      res.status(200).json(result.rows[0]); // Retourne les données insérées
-    } catch (err) {
-      console.error(err);
-      res.status(500).send("Erreur serveur");
-    }
-  });
+
+    const queryParams = [user_id, job_id];
+
+    const result = await pool.query(query, queryParams);
+
+    res.status(HTTP_STATUS.OK).json(result.rows[0]); // Retourne les données insérées
+  } catch (err) {
+    console.error(err);
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).send("Erreur serveur");
+  }
+});
 
 /**
  * @openapi
@@ -676,7 +760,6 @@ router.get("/me/job/:id", authenticateToken, async (req, res) => {
 router.get("/groups", authenticateToken, async (req, res) => {
   try {
     const userId = req.user.id;
-    const withoutProfessionId = req.query.without; 
 
     const query = `
             SELECT groups.id, groups.name, groups.code, groups.address, groups.cp, groups.city, groups.description, groups.background_url, user_groups.role, user_groups.joined_date
@@ -684,13 +767,15 @@ router.get("/groups", authenticateToken, async (req, res) => {
             INNER JOIN user_groups ON groups.id = user_groups.group_id
             WHERE user_groups.user_id = $1
         `;
-        
+
     const result = await pool.query(query, [userId]);
 
-    res.status(200).json(result.rows);
+    res.status(HTTP_STATUS.OK).json(result.rows);
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: "Erreur lors de la mise à jour" });
+    res
+      .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+      .json({ error: "Erreur server" });
   }
 });
 

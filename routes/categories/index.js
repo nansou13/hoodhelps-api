@@ -1,6 +1,9 @@
 const express = require("express");
 const router = express.Router();
+const Joi = require("joi");
+const { createJoiSchema } = require("../../utils");
 const pool = require("../../db");
+const { HTTP_STATUS } = require("../../constants");
 const {
   authenticateToken,
   generateAccessToken,
@@ -39,9 +42,11 @@ const {
 router.get("/", async (req, res) => {
   try {
     const result = await pool.query("SELECT * FROM categories");
-    return res.status(200).json({ categories: result.rows });
+    return res.status(HTTP_STATUS.OK).json({ categories: result.rows });
   } catch (err) {
-    return res.status(500).json({ error: "Erreur 500....", err });
+    return res
+      .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+      .json({ error: "Erreur 500....", err });
   }
 });
 
@@ -80,6 +85,16 @@ router.get("/", async (req, res) => {
  *         description: Erreur inconnue
  */
 router.get("/:category_id", async (req, res) => {
+  // Schema de validation Joi pour les paramètres du chemin
+  const validations = createJoiSchema({
+    category_id: { type: "uuid", required: true },
+  });
+  const { error } = validations.validate(req.params);
+
+  if (error) {
+    return res.status(HTTP_STATUS.BAD_REQUEST).json(error.details[0].message);
+  }
+
   try {
     const categoryID = req.params.category_id;
     const query = `
@@ -91,9 +106,11 @@ router.get("/:category_id", async (req, res) => {
   `;
 
     const result = await pool.query(query, [categoryID]);
-    return res.status(200).json(result.rows);
+    return res.status(HTTP_STATUS.OK).json(result.rows);
   } catch (err) {
-    return res.status(500).json({ error: "Erreur d'inscription", err });
+    return res
+      .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+      .json({ error: "Erreur d'inscription", err });
   }
 });
 
@@ -146,6 +163,16 @@ router.get("/:category_id", async (req, res) => {
  *         description: Erreur inconnue
  */
 router.get("/group/:group_id", async (req, res) => {
+  // Schema de validation Joi pour les paramètres du chemin
+  const validations = createJoiSchema({
+    group_id: { type: "uuid", required: true },
+  });
+  const { error } = validations.validate(req.params);
+
+  if (error) {
+    return res.status(HTTP_STATUS.BAD_REQUEST).json(error.details[0].message);
+  }
+
   try {
     const groupId = req.params.group_id;
     const query = `
@@ -171,9 +198,11 @@ router.get("/group/:group_id", async (req, res) => {
     `;
 
     const result = await pool.query(query, [groupId]);
-    return res.status(200).json(result.rows);
+    return res.status(HTTP_STATUS.OK).json(result.rows);
   } catch (err) {
-    return res.status(500).json({ error: "Erreur d'inscription" });
+    return res
+      .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+      .json({ error: "Erreur d'inscription" });
   }
 });
 
@@ -221,6 +250,16 @@ router.get("/group/:group_id", async (req, res) => {
  *         description: Erreur inconnue
  */
 router.post("/:id/", async (req, res) => {
+  // Schema de validation Joi pour les paramètres du chemin
+  const validations = createJoiSchema({
+    id: { type: "uuid", required: true },
+  });
+  const { error } = validations.validate(req.params);
+
+  if (error) {
+    return res.status(HTTP_STATUS.BAD_REQUEST).json(error.details[0].message);
+  }
+
   try {
     const id = req.params.id;
     //check si ID exist dans les catégories
@@ -228,16 +267,22 @@ router.post("/:id/", async (req, res) => {
       id,
     ]);
     if (exist.rowCount === 0) {
-      return res.status(404).json({ error: "Categorie non trouvée" });
+      return res
+        .status(HTTP_STATUS.NOT_FOUND)
+        .json({ error: "Categorie non trouvée" });
     }
 
     const newJob = await pool.query(
       "INSERT INTO professions (name, category_id) VALUES ($1, $2) RETURNING id",
       [req.body.profession_name, id]
     );
-    return res.status(201).json({ profession_id: newJob.rows[0].id });
+    return res
+      .status(HTTP_STATUS.CREATED)
+      .json({ profession_id: newJob.rows[0].id });
   } catch (err) {
-    res.status(500).json({ error: "Categorie non trouvée" });
+    res
+      .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+      .json({ error: "Categorie non trouvée" });
   }
 });
 
@@ -286,6 +331,16 @@ router.post("/:id/", async (req, res) => {
  *         description: Erreur inconnue
  */
 router.get("/:id", async (req, res) => {
+  // Schema de validation Joi pour les paramètres du chemin
+  const validations = createJoiSchema({
+    id: { type: "uuid", required: true },
+  });
+  const { error } = validations.validate(req.params);
+
+  if (error) {
+    return res.status(HTTP_STATUS.BAD_REQUEST).json(error.details[0].message);
+  }
+
   try {
     const id = req.params.id;
     const result = await pool.query(
@@ -294,10 +349,14 @@ router.get("/:id", async (req, res) => {
     );
 
     if (result.rowCount === 0)
-      return res.status(404).json({ error: "categorie inexistante" });
-    return res.status(200).json(result.rows[0]);
+      return res
+        .status(HTTP_STATUS.NOT_FOUND)
+        .json({ error: "categorie inexistante" });
+    return res.status(HTTP_STATUS.OK).json(result.rows[0]);
   } catch (err) {
-    return res.status(500).json({ error: "Erreur d'inscription" });
+    return res
+      .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+      .json({ error: "Erreur d'inscription" });
   }
 });
 
@@ -370,6 +429,17 @@ router.get("/:id", async (req, res) => {
  *         description: Erreur inconnue
  */
 router.get("/:groupId/jobs/:professionId/users", async (req, res) => {
+  // Schema de validation Joi pour les paramètres du chemin
+  const validations = createJoiSchema({
+    groupId: { type: "uuid", required: true },
+    professionId: { type: "uuid", required: true },
+  });
+  const { error } = validations.validate(req.params);
+
+  if (error) {
+    return res.status(HTTP_STATUS.BAD_REQUEST).json(error.details[0].message);
+  }
+
   try {
     const groupId = req.params.groupId;
     const professionId = req.params.professionId;
@@ -399,10 +469,12 @@ router.get("/:groupId/jobs/:professionId/users", async (req, res) => {
 
     const result = await pool.query(query, [groupId, professionId]);
 
-    res.status(200).json(result.rows);
+    res.status(HTTP_STATUS.OK).json(result.rows);
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: "Erreur serveur" });
+    res
+      .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+      .json({ error: "Erreur serveur" });
   }
 });
 

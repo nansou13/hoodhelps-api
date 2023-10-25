@@ -1,11 +1,17 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const pool = require('../../db');
-const {authenticateToken, generateAccessToken, generateRefreshToken} = require('../../token')
+const Joi = require("joi");
+const pool = require("../../db");
+const { HTTP_STATUS } = require("../../constants");
+const {
+  authenticateToken,
+  generateAccessToken,
+  generateRefreshToken,
+} = require("../../token");
 
 const makeid = function (length) {
-  let result = '';
-  const characters = 'abcdefghijklmnopqrstuvwxyz';
+  let result = "";
+  const characters = "abcdefghijklmnopqrstuvwxyz";
   const charactersLength = characters.length;
   for (let i = 0; i < length; i++) {
     result += characters.charAt(Math.floor(Math.random() * charactersLength));
@@ -78,14 +84,13 @@ const makeid = function (length) {
  *       500:
  *         description: Erreur inconnue
  */
-router.get('/', async (req, res) => {
-    
+router.get("/", async (req, res) => {
   try {
-    const page = parseInt(req.query.page) || 1;  // Supposons que la première page soit 1
+    const page = parseInt(req.query.page) || 1; // Supposons que la première page soit 1
     const limit = parseInt(req.query.limit) || 10; // Par défaut, retourne 10 groupes
-    
+
     const offset = (page - 1) * limit;
-    
+
     const query = `
             WITH GroupedUsers AS (
                 SELECT 
@@ -112,13 +117,13 @@ router.get('/', async (req, res) => {
             SELECT * FROM GroupedUsers;
         `;
 
-        const result = await pool.query(query, [limit, offset]);
+    const result = await pool.query(query, [limit, offset]);
 
-    res.status(200).json(result.rows);
-} catch (err) {
+    res.status(HTTP_STATUS.OK).json(result.rows);
+  } catch (err) {
     console.error(err);
-    res.status(500).send('Erreur serveur');
-}
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).send("Erreur serveur");
+  }
 });
 
 /**
@@ -181,11 +186,21 @@ router.get('/', async (req, res) => {
  *       500:
  *         description: Erreur inconnue
  */
-router.get('/:id', async (req, res) => {
-  try {
-      const groupId = req.params.id;
+router.get("/:id", async (req, res) => {
+  // Schema de validation Joi pour les paramètres du chemin
+  const validations = createJoiSchema({
+    id: { type: "uuid", required: true },
+  });
+  const { error } = validations.validate(req.params);
 
-      const query = `
+  if (error) {
+    return res.status(HTTP_STATUS.BAD_REQUEST).json(error.details[0].message);
+  }
+
+  try {
+    const groupId = req.params.id;
+
+    const query = `
           SELECT 
               g.id,
               g.name,
@@ -208,16 +223,16 @@ router.get('/:id', async (req, res) => {
           GROUP BY g.id;
       `;
 
-      const result = await pool.query(query, [groupId]);
+    const result = await pool.query(query, [groupId]);
 
-      if (result.rows.length === 0) {
-          res.status(404).send('Groupe non trouvé');
-      } else {
-          res.status(200).json(result.rows[0]);
-      }
+    if (result.rows.length === 0) {
+      res.status(HTTP_STATUS.NOT_FOUND).send("Groupe non trouvé");
+    } else {
+      res.status(HTTP_STATUS.OK).json(result.rows[0]);
+    }
   } catch (err) {
-      console.error(err);
-      res.status(500).send('Erreur serveur');
+    console.error(err);
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).send("Erreur serveur");
   }
 });
 
@@ -284,26 +299,55 @@ router.get('/:id', async (req, res) => {
  *       500:
  *         description: Erreur inconnue
  */
-router.post('/', async (req, res) => {
+router.post("/", async (req, res) => {
+  // Schema de validation Joi pour les paramètres du chemin
+  const validations = createJoiSchema({
+    name: { type: "string", required: true, description: "Nom du groupe" },
+    address: { type: "string", description: "Adresse du groupe" },
+    cp: {
+      type: "string",
+      min: 5,
+      max: 5,
+      description: "Code postal du groupe",
+    },
+    city: { type: "string", description: "Ville du groupe" },
+    description: { type: "string", description: "Description du groupe" },
+    background_url: {
+      type: "string",
+      pattern:
+        "^(https?:\\/\\/)?([\\da-z.-]+)\\.([a-z.]{2,6})([\\/\\w .-]*)*\\/?$",
+      description: "URL de l'arrière-plan du groupe",
+    },
+  });
+  const { error } = validations.validate(req.body);
+
+  if (error) {
+    return res.status(HTTP_STATUS.BAD_REQUEST).json(error.details[0].message);
+  }
+
   try {
-      const { name, address, cp, city, description, background_url } = req.body;
-      const code = makeid(4)+'-'+makeid(4)+'-'+makeid(4)
-      if (!name || !code) {
-          return res.status(400).json({ error: 'Le nom et le code sont obligatoires.' });
-      }
+    const { name, address, cp, city, description, background_url } = req.body;
+    const code = makeid(4) + "-" + makeid(4) + "-" + makeid(4);
+    if (!name || !code) {
+      return res
+        .status(HTTP_STATUS.NOT_FOUND)
+        .json({ error: "Le nom et le code sont obligatoires." });
+    }
 
-      const result = await pool.query(
-          'INSERT INTO groups (name, code, address, cp, city, description, background_url) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *',
-          [name, code, address, cp, city, description, background_url]
-      );
+    const result = await pool.query(
+      "INSERT INTO groups (name, code, address, cp, city, description, background_url) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *",
+      [name, code, address, cp, city, description, background_url]
+    );
 
-      res.status(201).json(result.rows[0]);
+    res.status(HTTP_STATUS.CREATED).json(result.rows[0]);
   } catch (err) {
-      if (err.constraint === "groups_code_key") {
-          return res.status(400).json({ error: 'Ce code existe déjà.' });
-      }
-      console.error(err);
-      res.status(500).send('Erreur serveur');
+    if (err.constraint === "groups_code_key") {
+      return res
+        .status(HTTP_STATUS.BAD_REQUEST)
+        .json({ error: "Ce code existe déjà." });
+    }
+    console.error(err);
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).send("Erreur serveur");
   }
 });
 
@@ -383,82 +427,127 @@ router.post('/', async (req, res) => {
  *       500:
  *         description: Erreur inconnue
  */
-router.put('/:id', async (req, res) => {
+router.put("/:id", async (req, res) => {
+  // Schema de validation Joi pour les paramètres du chemin
+  const validationsID = createJoiSchema({
+    id: { type: "uuid", required: true },
+  });
+  if (validationsID.error) {
+    return res.status(HTTP_STATUS.BAD_REQUEST).json(error.details[0].message);
+  }
+
+  // Schema de validation Joi pour les paramètres du body
+  const validations = createJoiSchema({
+    name: { type: "string", description: "Nom du groupe" },
+    code: { type: "string", description: "Code du groupe" },
+    address: { type: "string", description: "Adresse du groupe" },
+    cp: {
+      type: "string",
+      min: 5,
+      max: 5,
+      description: "Code postal du groupe",
+    },
+    city: { type: "string", description: "Ville du groupe" },
+    description: { type: "string", description: "Description du groupe" },
+    background_url: {
+      type: "string",
+      pattern:
+        "^(https?:\\/\\/)?([\\da-z.-]+)\\.([a-z.]{2,6})([\\/\\w .-]*)*\\/?$",
+      description: "URL de l'arrière-plan du groupe",
+    },
+  });
+
+  const { error } = validations.validate(req.body);
+
+  if (error) {
+    return res.status(HTTP_STATUS.BAD_REQUEST).json(error.details[0].message);
+  }
+
   try {
-      const groupId = req.params.id;
-      const { name, code, address, cp, city, description, background_url } = req.body;
+    const groupId = req.params.id;
+    const { name, code, address, cp, city, description, background_url } =
+      req.body;
 
-      // Assurez-vous que l'id du groupe est fourni
-      if (!groupId) {
-          return res.status(400).json({ error: "L'ID du groupe est nécessaire." });
-      }
+    // Assurez-vous que l'id du groupe est fourni
+    if (!groupId) {
+      return res
+        .status(HTTP_STATUS.BAD_REQUEST)
+        .json({ error: "L'ID du groupe est nécessaire." });
+    }
 
-      // Préparation de la mise à jour
-      let fields = [];
-      let values = [];
-      let counter = 1;
+    // Préparation de la mise à jour
+    let fields = [];
+    let values = [];
+    let counter = 1;
 
-      if (name) {
-          fields.push(`name = $${counter}`);
-          values.push(name);
-          counter++;
-      }
-      if (code) {
-          fields.push(`code = $${counter}`);
-          values.push(code);
-          counter++;
-      }
-      if (address) {
-          fields.push(`address = $${counter}`);
-          values.push(address);
-          counter++;
-      }
-      if (cp) {
-          fields.push(`cp = $${counter}`);
-          values.push(cp);
-          counter++;
-      }
-      if (city) {
-          fields.push(`city = $${counter}`);
-          values.push(city);
-          counter++;
-      }
-      if (description) {
-          fields.push(`description = $${counter}`);
-          values.push(description);
-          counter++;
-      }
-      if (background_url) {
-          fields.push(`background_url = $${counter}`);
-          values.push(background_url);
-          counter++;
-      }
+    if (name) {
+      fields.push(`name = $${counter}`);
+      values.push(name);
+      counter++;
+    }
+    if (code) {
+      fields.push(`code = $${counter}`);
+      values.push(code);
+      counter++;
+    }
+    if (address) {
+      fields.push(`address = $${counter}`);
+      values.push(address);
+      counter++;
+    }
+    if (cp) {
+      fields.push(`cp = $${counter}`);
+      values.push(cp);
+      counter++;
+    }
+    if (city) {
+      fields.push(`city = $${counter}`);
+      values.push(city);
+      counter++;
+    }
+    if (description) {
+      fields.push(`description = $${counter}`);
+      values.push(description);
+      counter++;
+    }
+    if (background_url) {
+      fields.push(`background_url = $${counter}`);
+      values.push(background_url);
+      counter++;
+    }
 
-      // Si aucun champ à mettre à jour n'est fourni, renvoyer une erreur
-      if (fields.length === 0) {
-          return res.status(400).json({ error: 'Aucun champ à mettre à jour' });
-      }
+    // Si aucun champ à mettre à jour n'est fourni, renvoyer une erreur
+    if (fields.length === 0) {
+      return res
+        .status(HTTP_STATUS.BAD_REQUEST)
+        .json({ error: "Aucun champ à mettre à jour" });
+    }
 
-      // Ajouter l'id du groupe aux valeurs et préparer la requête SQL
-      values.push(groupId);
-      const query = `UPDATE groups SET ${fields.join(', ')} WHERE id = $${counter} RETURNING *`;
+    // Ajouter l'id du groupe aux valeurs et préparer la requête SQL
+    values.push(groupId);
+    const query = `UPDATE groups SET ${fields.join(
+      ", "
+    )} WHERE id = $${counter} RETURNING *`;
 
-      const result = await pool.query(query, values);
+    const result = await pool.query(query, values);
 
-      if (result.rowCount === 0) {
-          return res.status(404).json({ error: 'Groupe non trouvé' });
-      }
+    if (result.rowCount === 0) {
+      return res
+        .status(HTTP_STATUS.NOT_FOUND)
+        .json({ error: "Groupe non trouvé" });
+    }
 
-      res.json(result.rows[0]);
+    res.json(result.rows[0]);
   } catch (err) {
-      if (err.constraint === "groups_code_key") {
-          return res.status(400).json({ error: 'Ce code existe déjà.' });
-      }
-      console.error(err);
-      res.status(500).send('Erreur serveur');
+    if (err.constraint === "groups_code_key") {
+      return res
+        .status(HTTP_STATUS.BAD_REQUEST)
+        .json({ error: "Ce code existe déjà." });
+    }
+    console.error(err);
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).send("Erreur serveur");
   }
 });
-
 
 /**
  * @swagger
@@ -495,7 +584,7 @@ router.put('/:id', async (req, res) => {
  *                 error:
  *                   type: string
  *                   description: Description de l'erreur interne
- *                 
+ *
  *       '500':
  *         description: Erreur interne du serveur
  *         content:
@@ -510,20 +599,38 @@ router.put('/:id', async (req, res) => {
  *                   type: string
  *                   description: Détails de l'erreur
  */
-router.get('/code/:id', async (req, res) => {
-    const code = req.params.id;
-    try {
-        console.log(code)
-        const result = await pool.query('SELECT id FROM groups WHERE code = $1', [code]);
-        if (result.rowCount !== 1) {
-            return res.status(401).json({ error: 'le groupe nexiste pas' });
-        }
-      return res.status(200).json({id: result.rows[0].id});
-    } catch (err) {
-      return res.status(500).json({ error: 'Erreur 500....', err });
-    }
+router.get("/code/:id", async (req, res) => {
+  // Schema de validation Joi pour les paramètres du chemin
+  const validations = createJoiSchema({
+    id: {
+      type: "string",
+      required: true,
+      pattern: /^[A-Za-z]{4}-[A-Za-z]{4}-[A-Za-z]{4}$/,
+      description: "L'ID du groupe au format XXXX-XXXX-XXXX",
+    },
   });
+  const { error } = validations.validate(req.params);
 
+  if (error) {
+    return res.status(HTTP_STATUS.BAD_REQUEST).json(error.details[0].message);
+  }
+
+  const code = req.params.id;
+  try {
+    console.log(code);
+    const result = await pool.query("SELECT id FROM groups WHERE code = $1", [
+      code,
+    ]);
+    if (result.rowCount !== 1) {
+      return res.status(401).json({ error: "le groupe nexiste pas" });
+    }
+    return res.status(HTTP_STATUS.OK).json({ id: result.rows[0].id });
+  } catch (err) {
+    return res
+      .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+      .json({ error: "Erreur 500....", err });
+  }
+});
 
 /**
  * @openapi
@@ -572,29 +679,52 @@ router.get('/code/:id', async (req, res) => {
  *       500:
  *         description: Erreur inconnue
  */
-router.post('/:id/user', async (req, res) => {
+router.post("/:id/user", async (req, res) => {
+  // Schema de validation Joi pour les paramètres du chemin
+  const validationsID = createJoiSchema({
+    id: { type: "uuid", required: true },
+  });
+  if (validationsID.error) {
+    return res.status(HTTP_STATUS.BAD_REQUEST).json(error.details[0].message);
+  }
+
+  // Schema de validation Joi pour les paramètres du body
+  const validations = createJoiSchema({
+    user_id: { type: "uuid", required: true },
+  });
+
+  const { error } = validations.validate(req.body);
+
+  if (error) {
+    return res.status(HTTP_STATUS.BAD_REQUEST).json(error.details[0].message);
+  }
+
   try {
-      const group_id = req.params.id;
-      const { user_id } = req.body;
+    const group_id = req.params.id;
+    const { user_id } = req.body;
 
-      // Validation des données fournies
-      if (!user_id || !group_id) {
-          return res.status(400).json({ error: 'Les champs user_id et group_id sont nécessaires.' });
-      }
+    // Validation des données fournies
+    if (!user_id || !group_id) {
+      return res
+        .status(HTTP_STATUS.BAD_REQUEST)
+        .json({ error: "Les champs user_id et group_id sont nécessaires." });
+    }
 
-      // Role est optionnel, s'il n'est pas fourni, il sera défini par défaut sur 'user' grâce à la définition de la table
-      let query = `INSERT INTO user_groups (user_id, group_id) VALUES ($1, $2) RETURNING *`;
-      let values = [user_id, group_id];
+    // Role est optionnel, s'il n'est pas fourni, il sera défini par défaut sur 'user' grâce à la définition de la table
+    let query = `INSERT INTO user_groups (user_id, group_id) VALUES ($1, $2) RETURNING *`;
+    let values = [user_id, group_id];
 
-      const result = await pool.query(query, values);
+    const result = await pool.query(query, values);
 
-      res.status(201).json(result.rows[0]);
+    res.status(HTTP_STATUS.CREATED).json(result.rows[0]);
   } catch (err) {
-      if (err.constraint === "user_groups_pkey") {
-          return res.status(400).json({ error: "L'utilisateur est déjà dans ce groupe." });
-      }
-      console.error(err);
-      res.status(500).send('Erreur serveur');
+    if (err.constraint === "user_groups_pkey") {
+      return res
+        .status(HTTP_STATUS.BAD_REQUEST)
+        .json({ error: "L'utilisateur est déjà dans ce groupe." });
+    }
+    console.error(err);
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).send("Erreur serveur");
   }
 });
 

@@ -1,14 +1,9 @@
-const express = require("express");
-const router = express.Router();
-const Joi = require("joi");
-const { createJoiSchema } = require("../../utils");
-const pool = require("../../db");
-const { HTTP_STATUS } = require("../../constants");
-const {
-  authenticateToken,
-  generateAccessToken,
-  generateRefreshToken,
-} = require("../../token");
+/* eslint-disable consistent-return */
+const express = require('express')
+const router = express.Router()
+const { createJoiSchema } = require('../utils')
+const pool = require('../db')
+const { HTTP_STATUS } = require('../constants')
 
 /**
  * @openapi
@@ -39,16 +34,14 @@ const {
  *       500:
  *         description: Erreur inconnue
  */
-router.get("/", async (req, res) => {
+router.get('/', async (req, res) => {
   try {
-    const result = await pool.query("SELECT * FROM categories");
-    return res.status(HTTP_STATUS.OK).json({ categories: result.rows });
+    const result = await pool.query('SELECT * FROM categories')
+    return res.status(HTTP_STATUS.OK).json({ categories: result.rows })
   } catch (err) {
-    return res
-      .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
-      .json({ error: "Erreur 500....", err });
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: 'Erreur 500....', err })
   }
-});
+})
 
 /**
  * @openapi
@@ -84,35 +77,35 @@ router.get("/", async (req, res) => {
  *       500:
  *         description: Erreur inconnue
  */
-router.get("/:category_id", async (req, res) => {
+router.get('/:category_id', async (req, res) => {
   // Schema de validation Joi pour les paramètres du chemin
   const validations = createJoiSchema({
-    category_id: { type: "uuid", required: true },
-  });
-  const { error } = validations.validate(req.params);
+    category_id: { type: 'uuid', required: true },
+  })
+  const { error } = validations.validate(req.params)
 
   if (error) {
-    return res.status(HTTP_STATUS.BAD_REQUEST).json(error.details[0].message);
+    return res.status(HTTP_STATUS.BAD_REQUEST).json(error.details[0].message)
   }
 
   try {
-    const categoryID = req.params.category_id;
+    const categoryID = req.params.category_id
     const query = `
     SELECT
       id,
       name
     FROM professions
     WHERE category_id = $1;
-  `;
+  `
 
-    const result = await pool.query(query, [categoryID]);
-    return res.status(HTTP_STATUS.OK).json(result.rows);
+    const result = await pool.query(query, [categoryID])
+    return res.status(HTTP_STATUS.OK).json(result.rows)
   } catch (err) {
     return res
       .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
-      .json({ error: "Erreur d'inscription", err });
+      .json({ error: "Erreur d'inscription", err })
   }
-});
+})
 
 /**
  * @openapi
@@ -162,19 +155,19 @@ router.get("/:category_id", async (req, res) => {
  *       500:
  *         description: Erreur inconnue
  */
-router.get("/group/:group_id", async (req, res) => {
+router.get('/group/:group_id', async (req, res) => {
   // Schema de validation Joi pour les paramètres du chemin
   const validations = createJoiSchema({
-    group_id: { type: "uuid", required: true },
-  });
-  const { error } = validations.validate(req.params);
+    group_id: { type: 'uuid', required: true },
+  })
+  const { error } = validations.validate(req.params)
 
   if (error) {
-    return res.status(HTTP_STATUS.BAD_REQUEST).json(error.details[0].message);
+    return res.status(HTTP_STATUS.BAD_REQUEST).json(error.details[0].message)
   }
 
   try {
-    const groupId = req.params.group_id;
+    const groupId = req.params.group_id
     const query = `
       SELECT
         c.id,
@@ -195,16 +188,14 @@ router.get("/group/:group_id", async (req, res) => {
         GROUP BY up.profession_id
       ) u ON p.id = u.profession_id
       GROUP BY c.id, c.name;
-    `;
+    `
 
-    const result = await pool.query(query, [groupId]);
-    return res.status(HTTP_STATUS.OK).json(result.rows);
+    const result = await pool.query(query, [groupId])
+    return res.status(HTTP_STATUS.OK).json(result.rows)
   } catch (err) {
-    return res
-      .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
-      .json({ error: "Erreur d'inscription" });
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: "Erreur d'inscription" })
   }
-});
+})
 
 /**
  * @openapi
@@ -249,42 +240,34 @@ router.get("/group/:group_id", async (req, res) => {
  *       500:
  *         description: Erreur inconnue
  */
-router.post("/:id/", async (req, res) => {
+router.post('/:id/', async (req, res) => {
   // Schema de validation Joi pour les paramètres du chemin
   const validations = createJoiSchema({
-    id: { type: "uuid", required: true },
-  });
-  const { error } = validations.validate(req.params);
+    id: { type: 'uuid', required: true },
+  })
+  const { error } = validations.validate(req.params)
 
   if (error) {
-    return res.status(HTTP_STATUS.BAD_REQUEST).json(error.details[0].message);
+    return res.status(HTTP_STATUS.BAD_REQUEST).json(error.details[0].message)
   }
 
   try {
-    const id = req.params.id;
-    //check si ID exist dans les catégories
-    const exist = await pool.query("SELECT * FROM categories WHERE id = $1", [
-      id,
-    ]);
+    const { id } = req.params
+    // check si ID exist dans les catégories
+    const exist = await pool.query('SELECT * FROM categories WHERE id = $1', [id])
     if (exist.rowCount === 0) {
-      return res
-        .status(HTTP_STATUS.NOT_FOUND)
-        .json({ error: "Categorie non trouvée" });
+      return res.status(HTTP_STATUS.NOT_FOUND).json({ error: 'Categorie non trouvée' })
     }
 
     const newJob = await pool.query(
-      "INSERT INTO professions (name, category_id) VALUES ($1, $2) RETURNING id",
+      'INSERT INTO professions (name, category_id) VALUES ($1, $2) RETURNING id',
       [req.body.profession_name, id]
-    );
-    return res
-      .status(HTTP_STATUS.CREATED)
-      .json({ profession_id: newJob.rows[0].id });
+    )
+    return res.status(HTTP_STATUS.CREATED).json({ profession_id: newJob.rows[0].id })
   } catch (err) {
-    res
-      .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
-      .json({ error: "Categorie non trouvée" });
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: 'Categorie non trouvée' })
   }
-});
+})
 
 /**
  * @openapi
@@ -330,35 +313,31 @@ router.post("/:id/", async (req, res) => {
  *       500:
  *         description: Erreur inconnue
  */
-router.get("/:id", async (req, res) => {
+router.get('/:id', async (req, res) => {
   // Schema de validation Joi pour les paramètres du chemin
   const validations = createJoiSchema({
-    id: { type: "uuid", required: true },
-  });
-  const { error } = validations.validate(req.params);
+    id: { type: 'uuid', required: true },
+  })
+  const { error } = validations.validate(req.params)
 
   if (error) {
-    return res.status(HTTP_STATUS.BAD_REQUEST).json(error.details[0].message);
+    return res.status(HTTP_STATUS.BAD_REQUEST).json(error.details[0].message)
   }
 
   try {
-    const id = req.params.id;
+    const { id } = req.params
     const result = await pool.query(
       "SELECT categories.id, categories.name, ARRAY_AGG(jsonb_build_object('id', professions.id, 'name', professions.name)) AS professions_list FROM categories LEFT JOIN professions ON categories.id = professions.category_id WHERE categories.id = $1 GROUP BY categories.id, categories.name;",
       [id]
-    );
+    )
 
     if (result.rowCount === 0)
-      return res
-        .status(HTTP_STATUS.NOT_FOUND)
-        .json({ error: "categorie inexistante" });
-    return res.status(HTTP_STATUS.OK).json(result.rows[0]);
+      return res.status(HTTP_STATUS.NOT_FOUND).json({ error: 'categorie inexistante' })
+    return res.status(HTTP_STATUS.OK).json(result.rows[0])
   } catch (err) {
-    return res
-      .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
-      .json({ error: "Erreur d'inscription" });
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: "Erreur d'inscription" })
   }
-});
+})
 
 /**
  * @openapi
@@ -428,21 +407,21 @@ router.get("/:id", async (req, res) => {
  *       500:
  *         description: Erreur inconnue
  */
-router.get("/:groupId/jobs/:professionId/users", async (req, res) => {
+router.get('/:groupId/jobs/:professionId/users', async (req, res) => {
   // Schema de validation Joi pour les paramètres du chemin
   const validations = createJoiSchema({
-    groupId: { type: "uuid", required: true },
-    professionId: { type: "uuid", required: true },
-  });
-  const { error } = validations.validate(req.params);
+    groupId: { type: 'uuid', required: true },
+    professionId: { type: 'uuid', required: true },
+  })
+  const { error } = validations.validate(req.params)
 
   if (error) {
-    return res.status(HTTP_STATUS.BAD_REQUEST).json(error.details[0].message);
+    return res.status(HTTP_STATUS.BAD_REQUEST).json(error.details[0].message)
   }
 
   try {
-    const groupId = req.params.groupId;
-    const professionId = req.params.professionId;
+    const { groupId } = req.params
+    const { professionId } = req.params
 
     // Assurez-vous que groupId et professionId sont des UUID valides
 
@@ -465,17 +444,14 @@ router.get("/:groupId/jobs/:professionId/users", async (req, res) => {
       INNER JOIN user_groups ON users.id = user_groups.user_id
       INNER JOIN user_professions ON users.id = user_professions.user_id
       WHERE user_groups.group_id = $1 AND user_professions.profession_id = $2
-    `;
+    `
 
-    const result = await pool.query(query, [groupId, professionId]);
+    const result = await pool.query(query, [groupId, professionId])
 
-    res.status(HTTP_STATUS.OK).json(result.rows);
-  } catch (error) {
-    console.error(error);
-    res
-      .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
-      .json({ error: "Erreur serveur" });
+    res.status(HTTP_STATUS.OK).json(result.rows)
+  } catch (errors) {
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: 'Erreur serveur' })
   }
-});
+})
 
-module.exports = router;
+module.exports = router

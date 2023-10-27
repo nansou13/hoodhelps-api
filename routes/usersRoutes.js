@@ -1,15 +1,27 @@
-const express = require("express");
-const bcrypt = require("bcrypt");
-const jwt = require("jsonwebtoken");
-const { Pool } = require("pg");
-const router = express.Router();
-const pool = require("../../db");
-const { HTTP_STATUS } = require("../../constants");
+/* eslint-disable no-plusplus */
+/* eslint-disable camelcase */
+/* eslint-disable consistent-return */
+const express = require('express')
+
+const router = express.Router()
 const {
-  authenticateToken,
-  generateAccessToken,
-  generateRefreshToken,
-} = require("../../token");
+  registerValidation,
+  loginValidation,
+  updateValidation,
+  linkJobValidation,
+  jobByIDValidation,
+} = require('../validations/userValidations')
+const {
+  registerUser,
+  loginUser,
+  updateUser,
+  linkJobToUser,
+  getUserJobs,
+  getUserJobByID,
+  getUserGroups,
+} = require('../services/userService')
+const { HTTP_STATUS } = require('../constants')
+const { authenticateToken, generateAccessToken, generateRefreshToken } = require('../token')
 
 /**
  * @openapi
@@ -82,40 +94,28 @@ const {
  *       500:
  *         description: Erreur lors de l'inscription
  */
-router.post("/register", async (req, res) => {
-  // Schema de validation Joi pour les paramètres du chemin
-  const validations = createJoiSchema({
-    username: { type: "string", required: true },
-    email: { type: "string", required: true, email: true },
-    password: { type: "string", required: true },
-  });
-
-  const { error } = validations.validate(req.body);
-
+router.post('/register', async (req, res) => {
+  const { error } = registerValidation(req.body)
   if (error) {
-    return res.status(HTTP_STATUS.BAD_REQUEST).json(error.details[0].message);
+    return res.status(HTTP_STATUS.BAD_REQUEST).json(error.details[0].message)
   }
 
   try {
-    const hashedPassword = await bcrypt.hash(req.body.password, 10);
-    const result = await pool.query(
-      "INSERT INTO users (username, email, password_hash) VALUES ($1, $2, $3) RETURNING *",
-      [req.body.username, req.body.email, hashedPassword]
-    );
-    const userResult = result.rows[0];
-    delete userResult.password_hash;
+    const { username, email, password } = req.body
+    const { user, accessToken, refreshToken, errorCode, errorMessage } = await registerUser(
+      username,
+      email,
+      password
+    )
 
-    const accessToken = generateAccessToken(userResult);
-    const refreshToken = generateRefreshToken(userResult);
-    res
-      .status(HTTP_STATUS.CREATED)
-      .json({ user: userResult, accessToken, refreshToken });
+    if (errorCode) {
+      res.status(errorCode).json({ error: errorMessage })
+    }
+    res.status(HTTP_STATUS.CREATED).json({ user, accessToken, refreshToken })
   } catch (err) {
-    res
-      .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
-      .json({ error: "Registration error" });
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: err.message })
   }
-});
+})
 
 /**
  * @openapi
@@ -191,56 +191,24 @@ router.post("/register", async (req, res) => {
  *       500:
  *         description: unknown error
  */
-router.post("/login", async (req, res) => {
-  // Schema de validation Joi pour les paramètres du chemin
-  const validations = createJoiSchema({
-    username: { type: "string", required: true },
-    password: { type: "string", required: true },
-  });
-
-  const { error } = validations.validate(req.body);
-
+router.post('/login', async (req, res) => {
+  const { error } = loginValidation(req.body)
   if (error) {
-    return res.status(HTTP_STATUS.BAD_REQUEST).json(error.details[0].message);
+    return res.status(HTTP_STATUS.BAD_REQUEST).json(error.details[0].message)
   }
 
   try {
-    const username = req.body.username;
-    const result = await pool.query("SELECT * FROM users WHERE username = $1", [
-      username,
-    ]);
-
-    if (result.rowCount !== 1) {
-      return res.status(HTTP_STATUS.FORBIDDEN).json({ error: "access denied" });
-    }
-
-    bcrypt.compare(
-      req.body.password,
-      result.rows[0].password_hash,
-      function (err, isMatch) {
-        if (err || !isMatch) {
-          return res
-            .status(HTTP_STATUS.FORBIDDEN)
-            .json({ error: "access denied" });
-        }
-        if (isMatch) {
-          const userResult = result.rows[0];
-          delete userResult.password_hash;
-
-          const accessToken = generateAccessToken(userResult);
-          const refreshToken = generateRefreshToken(userResult);
-
-          return res.json({ user: userResult, accessToken, refreshToken });
-        }
-      }
-    );
+    const { username, password } = req.body
+    const { user, accessToken, refreshToken } = await loginUser(username, password)
+    res.json({ user, accessToken, refreshToken })
   } catch (err) {
-    console.error(err);
-    res
-      .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
-      .json({ error: "Erreur...500..." });
+    if (err.message === 'access denied') {
+      res.status(HTTP_STATUS.FORBIDDEN).json({ error: err.message })
+    } else {
+      res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: 'Erreur...500...' })
+    }
   }
-});
+})
 
 /**
  * @openapi
@@ -248,7 +216,7 @@ router.post("/login", async (req, res) => {
  *   get:
  *     summary: get all current user information
  *     description: get all current user information
- *     tags: 
+ *     tags:
  *          - Users
  *     security:
  *        - bearerAuth: []
@@ -260,45 +228,43 @@ router.post("/login", async (req, res) => {
  *             schema:
  *               type: object
  *               properties:
-*                      id: 
+*                      id:
 *                          type: string
 *                          format: uuid
-*                      username: 
+*                      username:
 *                          type: string
-*                      email: 
+*                      email:
 *                          type: string
 *                          format: email
-*                      first_name: 
+*                      first_name:
 *                          type: string
-*                      last_name: 
+*                      last_name:
 *                          type: string
 *                      image_url:
 *                          type: string
-*                      date_of_birth: 
+*                      date_of_birth:
 *                          type: string
 *                          format: date
-*                      date_registered: 
+*                      date_registered:
 *                          type: string
 *                          format: date-time
-*                      last_login: 
+*                      last_login:
 *                          type: string
 *                          format: date-time
-*                      is_active: 
+*                      is_active:
 *                          type: boolean
-*                      role: 
+*                      role:
 *                          type: string
 *                          enum:
 *                              - "user"
 *                              - "admin"
-*                      phone_number: 
+*                      phone_number:
 *                          type: string
  *       401:
  *         description: Error Unauthorized
 
  */
-router.get("/me", authenticateToken, async (req, res) => {
-  return res.send(req.user);
-});
+router.get('/me', authenticateToken, async (req, res) => res.send(req.user))
 
 /**
  * @openapi
@@ -380,116 +346,32 @@ router.get("/me", authenticateToken, async (req, res) => {
  *       500:
  *         description: Erreur inconnue
  */
-router.put("/me", authenticateToken, async (req, res) => {
-  // Schema de validation Joi pour les paramètres du chemin
-  const validations = createJoiSchema({
-    email: { type: "string", email: true },
-    username: { type: "string" },
-    first_name: { type: "string" },
-    last_name: { type: "string" },
-    image_url: {
-      type: "string",
-      pattern:
-        "^(https?:\\/\\/)?([\\da-z.-]+)\\.([a-z.]{2,6})([\\/\\w .-]*)*\\/?$",
-      description: "URL de l'image de profil",
-    },
-    date_of_birth: { type: "string", pattern: "^[0-9]{4}-[0-9]{2}-[0-9]{2}$" }, // Format YYYY-MM-DD
-    phone_number: { type: "string", pattern: "^[0-9]+$" }, // Only numbers allowed
-  });
-
-  const { error } = validations.validate(req.body);
-
+router.put('/me', authenticateToken, async (req, res) => {
+  const { error } = updateValidation(req.body)
   if (error) {
-    return res.status(HTTP_STATUS.BAD_REQUEST).json(error.details[0].message);
+    return res.status(HTTP_STATUS.BAD_REQUEST).json(error.details[0].message)
   }
 
   try {
-    const userId = req.user.id;
-    const {
-      username,
-      email,
-      first_name,
-      last_name,
-      date_of_birth,
-      phone_number,
-      image_url,
-    } = req.body;
+    const userId = req.user.id
+    const { user, noContent } = await updateUser(userId, req.body)
 
-    let fields = [];
-    let values = [];
-    let counter = 1;
-
-    if (username) {
-      fields.push(`username = $${counter}`);
-      values.push(username);
-      counter++;
-    }
-    if (email) {
-      fields.push(`email = $${counter}`);
-      values.push(email);
-      counter++;
-    }
-    if (first_name) {
-      fields.push(`first_name = $${counter}`);
-      values.push(first_name);
-      counter++;
-    }
-    if (last_name) {
-      fields.push(`last_name = $${counter}`);
-      values.push(last_name);
-      counter++;
-    }
-    if (image_url) {
-      fields.push(`image_url = $${counter}`);
-      values.push(image_url);
-      counter++;
-    }
-    if (date_of_birth) {
-      fields.push(`date_of_birth = $${counter}`);
-      values.push(date_of_birth);
-      counter++;
-    }
-    if (phone_number) {
-      fields.push(`phone_number = $${counter}`);
-      values.push(phone_number);
-      counter++;
+    if (noContent) {
+      return res.status(HTTP_STATUS.NOCONTENT).json({ message: 'No fields to update' })
     }
 
-    if (fields.length === 0) {
-      return res
-        .status(HTTP_STATUS.NOCONTENT)
-        .json({ message: "Aucun champ à mettre à jour" });
-    }
+    const accessToken = generateAccessToken(user)
+    const refreshToken = generateRefreshToken(user)
 
-    const query = `UPDATE users SET ${fields.join(
-      ", "
-    )} WHERE id = $${counter} RETURNING *`;
-    values.push(userId);
-
-    const result = await pool.query(query, values);
-
-    if (result.rowCount === 0) {
-      return res
-        .status(HTTP_STATUS.NOT_FOUND)
-        .json({ error: "Utilisateur non trouvé" });
-    }
-
-    const userResult = result.rows[0];
-    delete userResult.password_hash;
-
-    const accessToken = generateAccessToken(userResult);
-    const refreshToken = generateRefreshToken(userResult);
-
-    res
-      .status(HTTP_STATUS.OK)
-      .json({ user: userResult, accessToken, refreshToken });
+    res.status(HTTP_STATUS.OK).json({ user, accessToken, refreshToken })
   } catch (err) {
-    console.error(err);
-    res
-      .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
-      .json({ error: "Erreur lors de la mise à jour" });
+    if (err.message === 'User not found') {
+      res.status(HTTP_STATUS.NOT_FOUND).json({ error: err.message })
+    } else {
+      res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: 'Update failed' })
+    }
   }
-});
+})
 
 /**
  * @openapi
@@ -539,45 +421,31 @@ router.put("/me", authenticateToken, async (req, res) => {
  *         description: Erreur inconnue
  */
 
-router.post("/me/job", authenticateToken, async (req, res) => {
-  // Schema de validation Joi pour les paramètres du chemin
-  const validations = createJoiSchema({
-    profession_id: { type: "uuid", required: true },
-    description: { type: "string" },
-    experience_years: { type: "number" },
-  });
-
-  const { error } = validations.validate(req.body);
+router.post('/me/job', authenticateToken, async (req, res) => {
+  const { error } = linkJobValidation(req.body)
 
   if (error) {
-    return res.status(HTTP_STATUS.BAD_REQUEST).json(error.details[0].message);
+    return res.status(HTTP_STATUS.BAD_REQUEST).json(error.details[0].message)
   }
 
   try {
-    const user_id = req.user.id;
-    const { profession_id, description, experience_years } = req.body;
+    const userId = req.user.id
+    const jobDetails = req.body
+    const linkedJob = await linkJobToUser(userId, jobDetails)
 
-    // Assurez-vous de valider les données ici avant de les insérer dans la base de données
+    if (linkedJob.errorCode) {
+      return res.status(linkedJob.errorCode).json({ error: linkedJob.errorMessage })
+    }
 
-    const query = `
-            INSERT INTO user_professions (user_id, profession_id, description, experience_years) 
-            VALUES ($1, $2, $3, $4)
-            RETURNING *;  -- retourne les données insérées
-        `;
-
-    const result = await pool.query(query, [
-      user_id,
-      profession_id,
-      description,
-      experience_years,
-    ]);
-
-    res.status(HTTP_STATUS.CREATED).json(result.rows[0]); // Retourne les données insérées
+    res.status(HTTP_STATUS.CREATED).json(linkedJob)
   } catch (err) {
-    console.error(err);
-    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).send("Erreur serveur");
+    if (err.message === 'Job link failed') {
+      res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: err.message })
+    } else {
+      res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: 'Server Error' })
+    }
   }
-});
+})
 
 /**
  * @openapi
@@ -620,31 +488,18 @@ router.post("/me/job", authenticateToken, async (req, res) => {
  *         description: Erreur inconnue
  */
 
-router.get("/me/job", authenticateToken, async (req, res) => {
+router.get('/me/job', authenticateToken, async (req, res) => {
   try {
-    const user_id = req.user.id;
-    const withoutProfessionId = req.query.without;
+    const userId = req.user.id
+    const withoutProfessionId = req.query.without
 
-    let query = `
-            SELECT * FROM user_professions
-            WHERE user_id = $1 
-        `;
+    const jobs = await getUserJobs(userId, withoutProfessionId)
 
-    const queryParams = [user_id];
-
-    if (withoutProfessionId) {
-      query += `AND profession_id != $2`;
-      queryParams.push(withoutProfessionId);
-    }
-
-    const result = await pool.query(query, queryParams);
-
-    res.status(HTTP_STATUS.OK).json(result.rows); // Retourne les données insérées
+    res.status(HTTP_STATUS.OK).json(jobs)
   } catch (err) {
-    console.error(err);
-    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).send("Erreur serveur");
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: 'Server Error' })
   }
-});
+})
 
 /**
  * @openapi
@@ -685,37 +540,24 @@ router.get("/me/job", authenticateToken, async (req, res) => {
  *       500:
  *         description: Erreur inconnue
  */
-router.get("/me/job/:id", authenticateToken, async (req, res) => {
-  // Schema de validation Joi pour les paramètres du chemin
-  const validations = createJoiSchema({
-    id: { type: "uuid", required: true },
-  });
-  const { error } = validations.validate(req.params);
+router.get('/me/job/:id', authenticateToken, async (req, res) => {
+  const { error } = jobByIDValidation(req.params)
 
   if (error) {
-    return res.status(HTTP_STATUS.BAD_REQUEST).json(error.details[0].message);
+    return res.status(HTTP_STATUS.BAD_REQUEST).json(error.details[0].message)
   }
 
   try {
-    const user_id = req.user.id;
-    const job_id = req.params.id;
+    const user_id = req.user.id
+    const job_id = req.params.id
 
-    let query = `
-              SELECT * FROM user_professions
-              WHERE user_id = $1 
-              AND profession_id = $2
-          `;
+    const jobByID = await getUserJobByID(user_id, job_id)
 
-    const queryParams = [user_id, job_id];
-
-    const result = await pool.query(query, queryParams);
-
-    res.status(HTTP_STATUS.OK).json(result.rows[0]); // Retourne les données insérées
+    res.status(HTTP_STATUS.OK).json(jobByID[0]) // Retourne les données insérées
   } catch (err) {
-    console.error(err);
-    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).send("Erreur serveur");
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).send('Erreur serveur')
   }
-});
+})
 
 /**
  * @openapi
@@ -757,26 +599,16 @@ router.get("/me/job/:id", authenticateToken, async (req, res) => {
  *       500:
  *         description: Erreur inconnue
  */
-router.get("/groups", authenticateToken, async (req, res) => {
+router.get('/groups', authenticateToken, async (req, res) => {
   try {
-    const userId = req.user.id;
+    const userId = req.user.id
 
-    const query = `
-            SELECT groups.id, groups.name, groups.code, groups.address, groups.cp, groups.city, groups.description, groups.background_url, user_groups.role, user_groups.joined_date
-            FROM groups
-            INNER JOIN user_groups ON groups.id = user_groups.group_id
-            WHERE user_groups.user_id = $1
-        `;
+    const userGroups = await getUserGroups(userId)
 
-    const result = await pool.query(query, [userId]);
-
-    res.status(HTTP_STATUS.OK).json(result.rows);
+    res.status(HTTP_STATUS.OK).json(userGroups)
   } catch (err) {
-    console.error(err);
-    res
-      .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
-      .json({ error: "Erreur server" });
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: 'Erreur server' })
   }
-});
+})
 
-module.exports = router;
+module.exports = router

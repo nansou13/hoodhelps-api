@@ -10,6 +10,7 @@ const {
   updateValidation,
   linkJobValidation,
   jobByIDValidation,
+  userIDValidation,
 } = require('../validations/userValidations')
 const {
   registerUser,
@@ -19,6 +20,7 @@ const {
   getUserJobs,
   getUserJobByID,
   getUserGroups,
+  getUserById,
 } = require('../services/userService')
 const { HTTP_STATUS } = require('../constants')
 const { authenticateToken, generateAccessToken, generateRefreshToken } = require('../token')
@@ -608,6 +610,84 @@ router.get('/groups', authenticateToken, async (req, res) => {
     res.status(HTTP_STATUS.OK).json(userGroups)
   } catch (err) {
     res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: 'Erreur server' })
+  }
+})
+
+
+/**
+ * @openapi
+ * /api/users/{id}:
+ *   get:
+ *     summary: get user information by id
+ *     description: get user information by id
+ *     tags:
+ *          - Users
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         description: ID du user
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     responses:
+ *       200:
+ *         description: User informations
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                      id:
+ *                          type: string
+ *                          format: uuid
+ *                      username:
+ *                          type: string
+ *                      email:
+ *                          type: string
+ *                          format: email
+ *                      first_name:
+ *                          type: string
+ *                      last_name:
+ *                          type: string
+ *                      image_url:
+ *                          type: string
+ *                      date_of_birth:
+ *                          type: string
+ *                          format: date
+ *                      date_registered:
+ *                          type: string
+ *                          format: date-time
+ *                      last_login:
+ *                          type: string
+ *                          format: date-time
+ *                      is_active:
+ *                          type: boolean
+ *                      role:
+ *                          type: string
+ *                          enum:
+ *                              - "user"
+ *                              - "admin"
+ *                      phone_number:
+ *                          type: string
+ *       500:
+ *         description: Erreur lors de l'inscription
+ */
+router.get('/:id', async (req, res) => {
+  const { error } = userIDValidation(req.params)
+  if (error) {
+    return res.status(HTTP_STATUS.BAD_REQUEST).json(error.details[0].message)
+  }
+
+  try {
+    const result = await getUserById(req.params.id)
+
+    if (result.errorCode) {
+      return res.status(result.errorCode).json({ error: result.errorMessage })
+    }
+    return res.status(HTTP_STATUS.OK).json(result)
+  } catch (err) {
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: err.message })
   }
 })
 

@@ -51,6 +51,12 @@ const jobByIDValidation = (data) => {
   })
   return schema.validate(data)
 }
+const userIDValidation = (data) => {
+  const schema = createJoiSchema({
+    id: { type: 'uuid', required: true },
+  })
+  return schema.validate(data)
+}
 
 module.exports = {
   registerValidation,
@@ -58,4 +64,5 @@ module.exports = {
   updateValidation,
   linkJobValidation,
   jobByIDValidation,
+  userIDValidation,
 }

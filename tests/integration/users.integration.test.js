@@ -243,4 +243,13 @@ describe('User Endpoints', () => {
       expect(res.body).toHaveProperty('experience_years')
     })
   })
+  describe('GET /api/users/{id}', () => {
+    it('should fetch a specific user by ID and return a 200 status', async () => {
+      const res = await request(app).get(`/api/users/${userID}`)
+
+      expect(res.status).toBe(200)
+      expect(res.body).toHaveProperty('id')
+      expect(res.body.id).toBe(userID)
+    })
+  })
 })

@@ -122,6 +122,22 @@ const linkJobToUser = async (userId, jobDetails) => {
   return result.rows[0]
 }
 
+const getUserById = async (userId) => {
+  const result = await pool.query('SELECT * FROM users WHERE id = $1', [userId])
+
+  if (result.rowCount === 0) {
+    return {
+      errorCode: HTTP_STATUS.BAD_REQUEST,
+      errorMessage: "Ce user n'existe pas.",
+    }
+  }
+
+  const userResult = result.rows[0]
+  delete userResult.password_hash
+
+  return userResult
+}
+
 const getUserJobs = async (userId, withoutProfessionId) => {
   let query = `
             SELECT * FROM user_professions
@@ -179,4 +195,5 @@ module.exports = {
   getUserJobs,
   getUserJobByID,
   getUserGroups,
+  getUserById,
 }

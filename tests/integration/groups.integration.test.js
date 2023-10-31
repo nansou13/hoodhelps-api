@@ -3,7 +3,7 @@ const { describe, it, expect, beforeAll, afterAll } = require('@jest/globals')
 const request = require('supertest')
 const app = require('../../app')
 const db = require('../../db')
-
+let client = null
 const username = 'JohnDoeGroups'
 const password = 'SecurePassword123'
 
@@ -14,7 +14,7 @@ let groupCode = ''
 
 describe('Groups Endpoints', () => {
   beforeAll(async () => {
-    await db.connect()
+    client = await db.connect()
 
     const newUser = {
       username,
@@ -23,7 +23,6 @@ describe('Groups Endpoints', () => {
     }
 
     const res = await request(app).post('/api/users/register').send(newUser)
-
     accessToken = res.body.accessToken
     userID = res.body.user.id
   })
@@ -36,6 +35,8 @@ describe('Groups Endpoints', () => {
     if (groupID) {
       await db.query('DELETE FROM groups WHERE id = $1', [groupID])
     }
+    await client.release()
+    await db.end()
   })
   describe('POST /api/groups', () => {
     it('should create a new group and return a 201 status', async () => {

@@ -2,6 +2,7 @@
 /* eslint-disable no-useless-catch */
 const pool = require('../db')
 const { makeid } = require('../utils')
+const { HTTP_STATUS } = require('../constants')
 
 const getGroups = async (limit, offset) => {
   const query = `
@@ -63,7 +64,7 @@ const getGroupsById = async (groupID) => {
     const result = await pool.query(query, [groupID])
     if (result.rows.length === 0) {
       return {
-        errorCode: 404,
+        errorCode: HTTP_STATUS.NOT_FOUND,
         errorMessage: "Ce groupe n'existe pas.",
       }
     }
@@ -132,7 +133,7 @@ const updateGroups = async (groupId, data) => {
   // Si aucun champ à mettre à jour n'est fourni, renvoyer une erreur
   if (fields.length === 0) {
     return {
-      errorCode: 204,
+      errorCode: HTTP_STATUS.NOCONTENT,
       errorMessage: 'Aucun champ à mettre à jour',
     }
   }
@@ -145,7 +146,7 @@ const updateGroups = async (groupId, data) => {
 
   if (result.rowCount === 0) {
     return {
-      errorCode: 404,
+      errorCode: HTTP_STATUS.NOT_FOUND,
       errorMessage: 'Groupe non trouvé',
     }
   }
@@ -157,7 +158,7 @@ const getGroupsByCode = async (code) => {
     const result = await pool.query('SELECT id FROM groups WHERE code = $1', [code])
     if (result.rowCount !== 1) {
       return {
-        errorCode: 404,
+        errorCode: HTTP_STATUS.NOT_FOUND,
         errorMessage: 'Groupe non trouvé',
       }
     }

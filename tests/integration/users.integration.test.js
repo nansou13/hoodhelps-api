@@ -4,6 +4,7 @@ const request = require('supertest')
 const app = require('../../app')
 const db = require('../../db')
 
+let client = null
 const username = 'JohnDoe'
 const password = 'SecurePassword123'
 
@@ -14,7 +15,7 @@ let userID = ''
 
 describe('User Endpoints', () => {
   beforeAll(async () => {
-    await db.connect()
+    client = await db.connect()
   })
 
   afterAll(async () => {
@@ -24,6 +25,8 @@ describe('User Endpoints', () => {
       // Utilisez la logique d'accès à votre base de données pour effectuer la suppression
       await db.query('DELETE FROM users WHERE id = $1', [userID])
     }
+    await client.release()
+    await db.end()
   })
 
   describe('POST /api/users/register', () => {

@@ -3,6 +3,7 @@
 const bcrypt = require('bcrypt')
 const pool = require('../db')
 const { generateAccessToken, generateRefreshToken } = require('../token')
+const { HTTP_STATUS } = require('../constants')
 
 const registerUser = async (username, email, password) => {
   try {
@@ -12,7 +13,7 @@ const registerUser = async (username, email, password) => {
     if (existingUser.rows.length > 0) {
       // Si un utilisateur avec le même username existe, renvoyez une erreur
       return {
-        errorCode: 400,
+        errorCode: HTTP_STATUS.BAD_REQUEST,
         errorMessage: "Un utilisateur avec le même nom d'utilisateur existe déjà.",
       }
       // throw new Error("Un utilisateur avec le même nom d'utilisateur existe déjà.")
@@ -100,7 +101,7 @@ const linkJobToUser = async (userId, jobDetails) => {
   if (existingJob.rows.length === 0) {
     // Si un utilisateur avec le même username existe, renvoyez une erreur
     return {
-      errorCode: 400,
+      errorCode: HTTP_STATUS.BAD_REQUEST,
       errorMessage: "Ce métier n'existe pas.",
     }
     // throw new Error("Un utilisateur avec le même nom d'utilisateur existe déjà.")

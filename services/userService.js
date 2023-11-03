@@ -123,7 +123,31 @@ const linkJobToUser = async (userId, jobDetails) => {
 }
 
 const getUserById = async (userId) => {
-  const result = await pool.query('SELECT * FROM users WHERE id = $1', [userId])
+  const query = `
+      SELECT 
+          u.id, u.username, u.email, u.first_name, u.last_name, u.phone_number,
+          u.image_url, u.date_of_birth, u.date_registered, u.last_login, u.is_active, u.role,
+          COALESCE(json_agg(
+              json_build_object(
+                  'id', p.id,
+                  'name', p.name,
+                  'description', up.description,
+                  'experience_years', up.experience_years
+              ) 
+              ORDER BY up.experience_years DESC
+          ) FILTER (WHERE p.id IS NOT NULL), '[]') AS jobs
+      FROM 
+          users u
+      LEFT JOIN 
+          user_professions up ON u.id = up.user_id
+      LEFT JOIN 
+          professions p ON up.profession_id = p.id
+      WHERE 
+          u.id = $1
+      GROUP BY 
+          u.id;
+    `
+  const result = await pool.query(query, [userId])
 
   if (result.rowCount === 0) {
     return {

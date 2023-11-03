@@ -613,7 +613,6 @@ router.get('/groups', authenticateToken, async (req, res) => {
   }
 })
 
-
 /**
  * @openapi
  * /api/users/{id}:

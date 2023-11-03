@@ -27,7 +27,7 @@ const updateValidation = (data) => {
     last_name: { type: 'string' },
     image_url: {
       type: 'string',
-      pattern: '^(https?:\\/\\/)?([\\da-z.-]+)\\.([a-z.]{2,6})([\\/\\w .-]*)*\\/?$',
+      pattern: '^(https?:\\/\\/)?([\\da-z.-]+)\\.([a-z.]{2,6})([\\/\\w .-]*)*\\/?.*$',
       description: "URL de l'image de profil",
     },
     date_of_birth: { type: 'string', pattern: '^[0-9]{4}-[0-9]{2}-[0-9]{2}$' }, // Format YYYY-MM-DD

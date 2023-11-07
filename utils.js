@@ -55,6 +55,7 @@ const createJoiSchema = function (fields) {
     if (value.required) {
       validator = validator.required()
     }
+    if (value.allowEmpty) validator = validator.allow('', null)
 
     if (value.default) {
       validator = validator.default(value.default)

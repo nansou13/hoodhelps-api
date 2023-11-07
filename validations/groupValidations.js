@@ -19,11 +19,12 @@ const createGroupsValidation = (data) => {
       description: 'Code postal du groupe',
     },
     city: { type: 'string', description: 'Ville du groupe' },
-    description: { type: 'string', description: 'Description du groupe' },
+    description: { type: 'string', allowEmpty: true, description: 'Description du groupe' },
     background_url: {
       type: 'string',
       pattern: '^(https?:\\/\\/)?([\\da-z.-]+)\\.([a-z.]{2,6})([\\/\\w .-]*)*\\/?$',
       description: "URL de l'arrière-plan du groupe",
+      allowEmpty: true,
     },
   })
 

@@ -356,21 +356,21 @@ router.put('/me', authenticateToken, async (req, res) => {
 
   try {
     const userId = req.user.id
-    const { user, noContent } = await updateUser(userId, req.body)
+    const result = await updateUser(userId, req.body)
 
-    if (noContent) {
+    if (result.noContent) {
       return res.status(HTTP_STATUS.NOCONTENT).json({ message: 'No fields to update' })
     }
 
-    const accessToken = generateAccessToken(user)
-    const refreshToken = generateRefreshToken(user)
+    const accessToken = generateAccessToken(result)
+    const refreshToken = generateRefreshToken(result)
 
-    res.status(HTTP_STATUS.OK).json({ user, accessToken, refreshToken })
+    res.status(HTTP_STATUS.OK).json({ ...result, accessToken, refreshToken })
   } catch (err) {
     if (err.message === 'User not found') {
       res.status(HTTP_STATUS.NOT_FOUND).json({ error: err.message })
     } else {
-      res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: 'Update failed' })
+      res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: `Update failed ${err.message}` })
     }
   }
 })

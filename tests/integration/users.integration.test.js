@@ -129,10 +129,9 @@ describe('User Endpoints', () => {
         })
 
       expect(res.status).toBe(200)
-      expect(res.body).toHaveProperty('user')
-      expect(res.body.user.email).toBe('new.email@example.com')
-      expect(res.body.user.first_name).toBe('NewFirstName')
-      expect(res.body.user.last_name).toBe('NewLastName')
+      expect(res.body.email).toBe('new.email@example.com')
+      expect(res.body.first_name).toBe('NewFirstName')
+      expect(res.body.last_name).toBe('NewLastName')
       // Ajoutez d'autres vérifications pour les champs mis à jour
     })
 

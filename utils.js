@@ -52,6 +52,7 @@ const createJoiSchema = function (fields) {
         throw new Error(`Type de validation inconnu: ${value.type}`)
     }
 
+    validator = validator.optional()
     if (value.required) {
       validator = validator.required()
     }

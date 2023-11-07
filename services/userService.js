@@ -89,7 +89,7 @@ const updateUser = async (userId, fieldsToUpdate) => {
   const userResult = result.rows[0]
   delete userResult.password_hash
 
-  return { user: userResult }
+  return userResult
 }
 
 const linkJobToUser = async (userId, jobDetails) => {

@@ -476,12 +476,11 @@ router.post('/me/job', authenticateToken, async (req, res) => {
  *               items:
  *                 type: object
  *                 properties:
- *                   user_id:
+ *                   id:
  *                     type: string
  *                     format: uuid
- *                   profession_id:
+ *                   name:
  *                     type: string
- *                     format: uuid
  *                   description:
  *                     type: string
  *                   experience_years:
@@ -499,7 +498,7 @@ router.get('/me/job', authenticateToken, async (req, res) => {
 
     res.status(HTTP_STATUS.OK).json(jobs)
   } catch (err) {
-    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: 'Server Error' })
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: `Server Error ${err.message}` })
   }
 })
 
@@ -669,6 +668,20 @@ router.get('/groups', authenticateToken, async (req, res) => {
  *                              - "admin"
  *                      phone_number:
  *                          type: string
+ *                      jobs:
+ *                         type: array
+ *                         items:
+ *                            type: object
+ *                            properties:
+ *                              id:
+ *                                type: string
+ *                                format: uuid
+ *                              name:
+ *                                type: string
+ *                              description:
+ *                                type: string
+ *                              experience_years:
+ *                                type: integer
  *       500:
  *         description: Erreur lors de l'inscription
  */

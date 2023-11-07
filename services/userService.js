@@ -164,16 +164,24 @@ const getUserById = async (userId) => {
 
 const getUserJobs = async (userId, withoutProfessionId) => {
   let query = `
-            SELECT * FROM user_professions
-            WHERE user_id = $1 
+  SELECT 
+    p.id, p.name, up.description, up.experience_years
+  FROM 
+    user_professions up
+  LEFT JOIN 
+    professions p ON up.profession_id = p.id
+  WHERE 
+    up.user_id = $1
         `
 
   const queryParams = [userId]
 
   if (withoutProfessionId) {
-    query += 'AND profession_id != $2'
+    query += 'AND p.id != $2 '
     queryParams.push(withoutProfessionId)
   }
+
+  query += 'GROUP BY p.id, p.name, up.description, up.experience_years;'
 
   const result = await pool.query(query, queryParams)
 

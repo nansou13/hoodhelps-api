@@ -242,6 +242,40 @@ describe('User Endpoints', () => {
       expect(res.body).toHaveProperty('experience_years')
     })
   })
+
+  describe('PUT /api/users/me/job/{id}', () => {
+    it('should update a specific job by ID and return a 200 status', async () => {
+      const res = await request(app)
+        .put(`/api/users/me/job/${profession_id}`)
+        .set('Authorization', `Bearer ${accessToken}`)
+        .send({
+          description: 'New Job Description',
+          experience_years: 10,
+        })
+
+      expect(res.status).toBe(200)
+      expect(res.body).toHaveProperty('user_id')
+      expect(res.body.user_id).toBe(userID)
+      expect(res.body).toHaveProperty('profession_id')
+      expect(res.body).toHaveProperty('description')
+      expect(res.body.description).toBe('New Job Description')
+      expect(res.body).toHaveProperty('experience_years')
+      expect(res.body.experience_years).toBe(10)
+    })
+
+    it('should return 400 status when validation fails', async () => {
+      const res = await request(app)
+        .put(`/api/users/me/job/${profession_id}`)
+        .set('Authorization', `Bearer ${accessToken}`)
+        .send({
+          description: 'New Job Description',
+          experience_years: 'invalid', // experience_years invalide pour déclencher une validation côté serveur
+        })
+
+      expect(res.status).toBe(400)
+    })
+  })
+
   describe('GET /api/users/{id}', () => {
     it('should fetch a specific user by ID and return a 200 status', async () => {
       const res = await request(app).get(`/api/users/${userID}`)

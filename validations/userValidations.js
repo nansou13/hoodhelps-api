@@ -59,6 +59,14 @@ const userIDValidation = (data) => {
   return schema.validate(data)
 }
 
+const updateJobValidation = (data) => {
+  const schema = createJoiSchema({
+    description: { type: 'string', allowEmpty: true },
+    experience_years: { type: 'number' },
+  })
+  return schema.validate(data)
+}
+
 module.exports = {
   registerValidation,
   loginValidation,
@@ -66,4 +74,5 @@ module.exports = {
   linkJobValidation,
   jobByIDValidation,
   userIDValidation,
+  updateJobValidation,
 }

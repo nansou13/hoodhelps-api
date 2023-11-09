@@ -219,6 +219,17 @@ const getUserGroups = async (userId) => {
   return result.rows
 }
 
+const updateUserJobByID = async (userId, profession_id, experience_years, description) => {
+  const query = `UPDATE user_professions SET description = $1, experience_years = $2 WHERE profession_id = $3 AND user_id = $4 RETURNING *`
+
+  const result = await pool.query(query, [description, experience_years, profession_id, userId])
+
+  if (result.rowCount === 0) {
+    throw new Error('Error updating user job')
+  }
+  return result.rows[0]
+}
+
 module.exports = {
   registerUser,
   loginUser,
@@ -228,4 +239,5 @@ module.exports = {
   getUserJobByID,
   getUserGroups,
   getUserById,
+  updateUserJobByID,
 }

@@ -11,6 +11,7 @@ const {
   linkJobValidation,
   jobByIDValidation,
   userIDValidation,
+  updateJobValidation,
 } = require('../validations/userValidations')
 const {
   registerUser,
@@ -21,6 +22,7 @@ const {
   getUserJobByID,
   getUserGroups,
   getUserById,
+  updateUserJobByID,
 } = require('../services/userService')
 const { HTTP_STATUS } = require('../constants')
 const { authenticateToken, generateAccessToken, generateRefreshToken } = require('../token')
@@ -700,6 +702,82 @@ router.get('/:id', async (req, res) => {
     return res.status(HTTP_STATUS.OK).json(result)
   } catch (err) {
     return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: err.message })
+  }
+})
+
+/**
+ * @openapi
+ * /api/users/me/job/{id}:
+ *   put:
+ *     summary: update le job d'un utilisateur via son id
+ *     description: update le job d'un utilisateur via son id
+ *     tags:
+ *       - Users
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         description: ID du job
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               description:
+ *                 type: string
+ *               experience_years:
+ *                 type: integer
+ *     responses:
+ *       200:
+ *         description: Update done
+ *         content:
+ *           application/json:
+ *             schema:
+ *                 type: object
+ *                 properties:
+ *                   user_id:
+ *                     type: string
+ *                     format: uuid
+ *                   profession_id:
+ *                     type: string
+ *                     format: uuid
+ *                   description:
+ *                     type: string
+ *                   experience_years:
+ *                     type: integer
+ *       500:
+ *         description: Erreur inconnue
+ */
+router.put('/me/job/:id', authenticateToken, async (req, res) => {
+  const { error } = jobByIDValidation(req.params)
+
+  if (error) {
+    return res.status(HTTP_STATUS.BAD_REQUEST).json(error.details[0].message)
+  }
+
+  const errorResult = updateJobValidation(req.body)
+
+  if (errorResult.error) {
+    return res.status(HTTP_STATUS.BAD_REQUEST).json(errorResult.error.details[0].message)
+  }
+
+  try {
+    const user_id = req.user.id
+    const job_id = req.params.id
+    const { description, experience_years } = req.body
+
+    const jobByID = await updateUserJobByID(user_id, job_id, experience_years, description)
+
+    res.status(HTTP_STATUS.OK).json(jobByID) // Retourne les données insérées
+  } catch (err) {
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).send('Erreur serveur')
   }
 })
 

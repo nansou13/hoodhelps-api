@@ -4,6 +4,8 @@ const bodyParser = require('body-parser')
 const swaggerJSDoc = require('swagger-jsdoc')
 const cors = require('cors')
 const swaggerUi = require('swagger-ui-express')
+const compression = require("compression");
+
 const userRoutes = require('./routes/usersRoutes')
 const categoriesRoutes = require('./routes/categoriesRoutes')
 const groupsRoutes = require('./routes/groupsRoutes')
@@ -52,6 +54,8 @@ const swaggerSpec = swaggerJSDoc(options)
 
 // Autorise toutes les origines à accéder à votre API (à des fins de développement)
 app.use(cors())
+
+app.use(compression())
 
 app.use(bodyParser.json())
 app.use(bodyParser.urlencoded({ extended: true }))

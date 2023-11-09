@@ -1,5 +1,9 @@
 /* eslint-disable consistent-return */
 const express = require('express')
+const apicache = require('apicache');
+
+let cache = apicache.middleware;
+
 const router = express.Router()
 const { HTTP_STATUS } = require('../constants')
 const {
@@ -95,7 +99,7 @@ router.post('/', async (req, res) => {
  *       500:
  *         description: Erreur inconnue
  */
-router.get('/', async (req, res) => {
+router.get('/', cache('2 days'), async (req, res) => {
   try {
     const result = await getAllCategories()
     return res.status(HTTP_STATUS.OK).json(result)

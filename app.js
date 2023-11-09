@@ -4,7 +4,7 @@ const bodyParser = require('body-parser')
 const swaggerJSDoc = require('swagger-jsdoc')
 const cors = require('cors')
 const swaggerUi = require('swagger-ui-express')
-const compression = require("compression");
+const compression = require('compression')
 
 const userRoutes = require('./routes/usersRoutes')
 const categoriesRoutes = require('./routes/categoriesRoutes')

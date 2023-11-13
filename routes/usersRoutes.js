@@ -23,6 +23,7 @@ const {
   getUserGroups,
   getUserById,
   updateUserJobByID,
+  deleteUserJobByID,
 } = require('../services/userService')
 const { HTTP_STATUS } = require('../constants')
 const { authenticateToken, generateAccessToken, generateRefreshToken } = require('../token')
@@ -778,6 +779,57 @@ router.put('/me/job/:id', authenticateToken, async (req, res) => {
     res.status(HTTP_STATUS.OK).json(jobByID) // Retourne les données insérées
   } catch (err) {
     res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).send('Erreur serveur')
+  }
+})
+
+/**
+ * @openapi
+ * /api/users/me/job/{id}:
+ *   delete:
+ *     summary: Supprime le job d'un utilisateur via son id
+ *     description: Supprime un job spécifique associé à l'utilisateur authentifié
+ *     tags:
+ *       - Users
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         description: ID du job à supprimer
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     responses:
+ *       200:
+ *         description: Job supprimé avec succès
+ *       400:
+ *         description: Requête invalide
+ *       404:
+ *         description: Job non trouvé
+ *       500:
+ *         description: Erreur serveur
+ */
+router.delete('/me/job/:id', authenticateToken, async (req, res) => {
+  const { error } = jobByIDValidation(req.params)
+
+  if (error) {
+    return res.status(HTTP_STATUS.BAD_REQUEST).json(error.details[0].message)
+  }
+
+  try {
+    const job_id = req.params.id
+    const user_id = req.user.id
+
+    const result = await deleteUserJobByID(user_id, job_id)
+
+    if (result.errorCode) {
+      return res.status(result.errorCode).json({ error: result.errorMessage })
+    }
+
+    res.status(204).send('Job supprimé avec succès')
+  } catch (err) {
+    res.status(500).send('Erreur serveur')
   }
 })
 

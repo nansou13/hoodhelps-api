@@ -1,8 +1,8 @@
 /* eslint-disable consistent-return */
 const express = require('express')
-const apicache = require('apicache');
+const apicache = require('apicache')
 
-let cache = apicache.middleware;
+const cache = apicache.middleware
 
 const router = express.Router()
 const { HTTP_STATUS } = require('../constants')

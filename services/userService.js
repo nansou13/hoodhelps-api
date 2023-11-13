@@ -230,6 +230,24 @@ const updateUserJobByID = async (userId, profession_id, experience_years, descri
   return result.rows[0]
 }
 
+const deleteUserJobByID = async (userId, professionId) => {
+  const query = `DELETE FROM user_professions WHERE user_id = $1 AND profession_id = $2 RETURNING *`
+
+  const result = await pool.query(query, [userId, professionId])
+
+  // Si rowCount est 0, cela signifie qu'aucune ligne n'a été supprimée,
+  // probablement parce qu'aucune correspondance n'a été trouvée pour ces ID.
+  if (result.rowCount === 0) {
+    return {
+      errorCode: HTTP_STATUS.NOT_FOUND,
+      errorMessage: "Ce job n'existe pas.",
+    }
+  }
+
+  // La fonction renvoie l'entrée supprimée, utile pour confirmer ce qui a été supprimé
+  return result.rows[0]
+}
+
 module.exports = {
   registerUser,
   loginUser,
@@ -240,4 +258,5 @@ module.exports = {
   getUserGroups,
   getUserById,
   updateUserJobByID,
+  deleteUserJobByID,
 }

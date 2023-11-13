@@ -288,4 +288,28 @@ describe('User Endpoints', () => {
       expect(res.body.jobs.length).toBeGreaterThan(0)
     })
   })
+
+  describe('DELETE /api/users/me/job/{id}', () => {
+    it('should delete a specific job by ID and return a 204 status', async () => {
+      const res = await request(app)
+        .delete(`/api/users/me/job/${profession_id}`)
+        .set('Authorization', `Bearer ${accessToken}`)
+
+      expect(res.status).toBe(204)
+    })
+    it('should return 404 status when job is not found', async () => {
+      const res = await request(app)
+        .delete(`/api/users/me/job/e3f298ef-5d3e-4daf-b2f9-ab6b21e5f069`)
+        .set('Authorization', `Bearer ${accessToken}`)
+
+      expect(res.status).toBe(404)
+    })
+    it('should return 400 status when validation fails', async () => {
+      const res = await request(app)
+        .delete(`/api/users/me/job/invalid`)
+        .set('Authorization', `Bearer ${accessToken}`)
+
+      expect(res.status).toBe(400)
+    })
+  })
 })

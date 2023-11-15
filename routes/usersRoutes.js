@@ -12,6 +12,8 @@ const {
   jobByIDValidation,
   userIDValidation,
   updateJobValidation,
+  emailValidation,
+  resetPasswordValidation,
 } = require('../validations/userValidations')
 const {
   registerUser,
@@ -24,9 +26,14 @@ const {
   getUserById,
   updateUserJobByID,
   deleteUserJobByID,
+  findUserByEmail,
+  saveResetToken,
+  sendResetTokenByEmail,
+  verifyResetCodeAndCodeUpdate,
 } = require('../services/userService')
 const { HTTP_STATUS } = require('../constants')
 const { authenticateToken, generateAccessToken, generateRefreshToken } = require('../token')
+const { generateResetToken } = require('../utils')
 
 /**
  * @openapi
@@ -829,6 +836,122 @@ router.delete('/me/job/:id', authenticateToken, async (req, res) => {
 
     res.status(204).send('Job supprimé avec succès')
   } catch (err) {
+    res.status(500).send('Erreur serveur')
+  }
+})
+
+/**
+ * @openapi
+ * /api/users/request-password-reset:
+ *   post:
+ *     summary: Envoie un email de réinitialisation de mot de passe à l'utilisateur
+ *     description: Envoie un email de réinitialisation de mot de passe à l'utilisateur
+ *     tags:
+ *       - Users
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *     responses:
+ *       200:
+ *         description: Email de réinitialisation envoyé avec succès
+ *       400:
+ *         description: Requête invalide
+ *       404:
+ *         description: Utilisateur non trouvé
+ *       500:
+ *         description: Erreur serveur
+ */
+router.post('/request-password-reset', async (req, res) => {
+  try {
+    const { email } = req.body
+
+    const { error } = emailValidation(req.body)
+    if (error) {
+      return res.status(HTTP_STATUS.BAD_REQUEST).json(error.details[0].message)
+    }
+
+    // Vérifiez si l'utilisateur existe dans votre base de données
+    const user = await findUserByEmail(email)
+
+    if (!user) {
+      return res.status(404).send('Utilisateur non trouvé')
+    }
+    // Générez un jeton de réinitialisation de mot de passe
+    const { resetCode, resetTokenExpires } = generateResetToken()
+
+    // Enregistrez ce jeton dans la base de données (associé à l'utilisateur)
+    await saveResetToken(user.id, { resetCode, resetTokenExpires })
+
+    // Envoyez le jeton à l'utilisateur par email
+    await sendResetTokenByEmail(email, resetCode)
+
+    res.send('Un email de réinitialisation a été envoyé.')
+  } catch (error) {
+    res.status(500).send(`Erreur serveur : ${error.message}`)
+  }
+})
+
+/**
+ * @openapi
+ * /api/users/reset-password:
+ *   post:
+ *     summary: Modification du mot de passe de l'utilisateur
+ *     description: Modification du mot de passe de l'utilisateur
+ *     tags:
+ *       - Users
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               userID:
+ *                 type: string
+ *                 format: uuid
+ *               resetCode:
+ *                 type: string
+ *               newPassword:
+ *                 type: string
+ *               newPassword2:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Mot de passe réinitialisé avec succès
+ *       400:
+ *         description: Requête invalide
+ *       403:
+ *         description: Code faux ou expiré
+ *       404:
+ *         description: Code inexistant
+ *       500:
+ *         description: Erreur serveur
+ */
+router.post('/reset-password', async (req, res) => {
+  try {
+    const { error } = resetPasswordValidation(req.body)
+
+    if (error) {
+      return res.status(HTTP_STATUS.BAD_REQUEST).json(error.details[0].message)
+    }
+
+    const { userID, resetCode, newPassword } = req.body
+
+    const result = await verifyResetCodeAndCodeUpdate(userID, resetCode, newPassword)
+
+    if (result.errorCode) {
+      return res.status(result.errorCode).json({ error: result.errorMessage })
+    }
+
+    res.status(200).json(result)
+  } catch (error) {
     res.status(500).send('Erreur serveur')
   }
 })

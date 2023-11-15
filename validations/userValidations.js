@@ -67,6 +67,29 @@ const updateJobValidation = (data) => {
   return schema.validate(data)
 }
 
+const emailValidation = (data) => {
+  const schema = createJoiSchema({
+    email: { type: 'string', required: true, email: true },
+  })
+
+  return schema.validate(data)
+}
+
+const resetPasswordValidation = (data) => {
+  const schema = createJoiSchema({
+    userID: { type: 'uuid', required: true },
+    resetCode: { type: 'string', required: true, min: 6, max: 6 },
+    newPassword: { type: 'string', required: true },
+    newPassword2: {
+      type: 'match',
+      matches: 'newPassword',
+      required: true,
+    },
+  })
+
+  return schema.validate(data)
+}
+
 module.exports = {
   registerValidation,
   loginValidation,
@@ -75,4 +98,6 @@ module.exports = {
   jobByIDValidation,
   userIDValidation,
   updateJobValidation,
+  emailValidation,
+  resetPasswordValidation,
 }

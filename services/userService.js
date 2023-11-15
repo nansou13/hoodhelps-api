@@ -1,9 +1,57 @@
 /* eslint-disable camelcase */
 /* eslint-disable no-useless-catch */
 const bcrypt = require('bcrypt')
+const nodemailer = require('nodemailer')
 const pool = require('../db')
 const { generateAccessToken, generateRefreshToken } = require('../token')
 const { HTTP_STATUS } = require('../constants')
+
+// Configuration de Nodemailer (exemple avec Mailtrap pour les tests)
+const transporter = nodemailer.createTransport({
+  host: 'smtp.ionos.fr',
+  port: 465,
+  auth: {
+    user: process.env.MAILTRAP_USER,
+    pass: process.env.MAILTRAP_PASSWORD,
+  },
+})
+
+const sendResetTokenByEmail = async (email, resetToken) => {
+  const mailOptions = {
+    from: 'hoodhelps@gigan.fr',
+    to: email,
+    subject: 'Réinitialisation de votre mot de passe',
+    html: `<!DOCTYPE html>
+    <html>
+    <head>
+        <style>
+            .code {
+                font-size: 24px; /* Taille de la police */
+                font-weight: bold; /* Gras */
+                color: #333; /* Couleur du texte */
+            }
+            .instructions {
+                font-size: 16px;
+                color: #555;
+            }
+            /* Ajoutez plus de styles selon vos besoins */
+        </style>
+    </head>
+    <body>
+        <p class="instructions">Votre code de réinitialisation de mot de passe est :</p>
+        <p class="code">${resetToken}</p> <!-- Code en gros et gras -->
+        <p class="instructions">Ce code expire dans une heure.</p>
+    </body>
+    </html>`,
+  }
+
+  try {
+    await transporter.sendMail(mailOptions)
+    return true
+  } catch (error) {
+    return error
+  }
+}
 
 const registerUser = async (username, email, password) => {
   try {
@@ -248,6 +296,76 @@ const deleteUserJobByID = async (userId, professionId) => {
   return result.rows[0]
 }
 
+const findUserByEmail = async (email) => {
+  const formatMail = email.toLowerCase()
+
+  const query = `SELECT * FROM users WHERE email = $1`
+  const result = await pool.query(query, [formatMail])
+  if (result.rowCount === 0) {
+    return null
+  }
+
+  return result.rows[0]
+}
+
+const saveResetToken = async (userId, tokenData) => {
+  const { resetCode, resetTokenExpires } = tokenData
+  const query = `INSERT INTO password_resets (user_id, reset_token_hash, reset_token_expires) VALUES ($1, $2, $3)`
+  const result = await pool.query(query, [userId, resetCode, resetTokenExpires])
+
+  if (result.rowCount === 0) {
+    throw new Error('Error saving reset token')
+  }
+}
+
+const verifyResetCodeAndCodeUpdate = async (userId, resetCode, newPassword) => {
+  // Requête SQL pour trouver l'utilisateur et le code de réinitialisation
+  const query = `SELECT reset_token_hash, reset_token_expires FROM password_resets WHERE user_id = $1 ORDER BY reset_token_expires DESC LIMIT 1`
+
+  try {
+    const { rows } = await pool.query(query, [userId])
+    const user = rows[0]
+
+    if (!user) {
+      return {
+        errorCode: HTTP_STATUS.NOT_FOUND,
+        errorMessage: 'Aucun code trouvé avec cet email.',
+      }
+    }
+
+    const isCodeValid = user.reset_token_hash === resetCode
+    const isCodeExpired = new Date(user.reset_token_expires) < new Date()
+
+    if (!isCodeValid || isCodeExpired) {
+      return {
+        errorCode: HTTP_STATUS.FORBIDDEN,
+        errorMessage: 'Code de réinitialisation invalide ou expiré.',
+      }
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10)
+    const updateQuery = `UPDATE users SET password_hash = $1 WHERE id = $2 RETURNING *`
+    const UpdateResult = await pool.query(updateQuery, [hashedPassword, userId])
+
+    if (UpdateResult.rowCount === 0) {
+      throw new Error('User not found')
+    }
+
+    const deleteQuery = `DELETE FROM password_resets WHERE user_id = $1 RETURNING *`
+    await pool.query(deleteQuery, [userId])
+
+    const userResult = UpdateResult.rows[0]
+    delete userResult.password_hash
+
+    return userResult
+  } catch (error) {
+    return {
+      errorCode: HTTP_STATUS.INTERNAL_SERVER_ERROR,
+      errorMessage: `Error: ${error.message}`,
+    }
+  }
+}
+
 module.exports = {
   registerUser,
   loginUser,
@@ -259,4 +377,8 @@ module.exports = {
   getUserById,
   updateUserJobByID,
   deleteUserJobByID,
+  findUserByEmail,
+  saveResetToken,
+  sendResetTokenByEmail,
+  verifyResetCodeAndCodeUpdate,
 }

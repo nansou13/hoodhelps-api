@@ -63,3 +63,13 @@ CREATE TABLE user_professions (
     experience_years INTEGER,
     PRIMARY KEY (user_id, profession_id)
 );
+
+DROP TYPE IF EXISTS password_resets;
+CREATE TABLE password_resets (
+    id SERIAL PRIMARY KEY,
+    user_id UUID NOT NULL REFERENCES users(id), 
+    reset_token_hash VARCHAR(255) NOT NULL,
+    reset_token_expires TIMESTAMP NOT NULL,
+    created_at TIMESTAMP DEFAULT current_timestamp
+);
+

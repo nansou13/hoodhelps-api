@@ -2,6 +2,19 @@
 /* eslint-disable no-restricted-syntax */
 const Joi = require('joi')
 
+const generateResetToken = () => {
+  // Créer un token aléatoire
+  const resetCode = Math.floor(100000 + Math.random() * 900000)
+
+  // Créer une date d'expiration pour le token, par exemple 1 heure
+  const resetTokenExpires = new Date(Date.now() + 3600000) // 1 heure à partir de maintenant
+
+  return {
+    resetCode, // Envoyé à l'utilisateur
+    resetTokenExpires, // Stocké dans la base de données
+  }
+}
+
 const createJoiSchema = function (fields) {
   const schema = {}
 
@@ -48,6 +61,14 @@ const createJoiSchema = function (fields) {
         }
         break
 
+      case 'match':
+        validator = Joi.any()
+          .valid(Joi.ref(value.matches))
+          .messages({
+            'any.only': `${key} ne correspond pas à ${value.matches}`,
+          })
+        break
+
       default:
         throw new Error(`Type de validation inconnu: ${value.type}`)
     }
@@ -81,4 +102,5 @@ const makeid = function (length) {
 module.exports = {
   makeid,
   createJoiSchema,
+  generateResetToken,
 }

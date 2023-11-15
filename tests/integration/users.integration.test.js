@@ -7,6 +7,7 @@ const db = require('../../db')
 let client = null
 const username = 'JohnDoe'
 const password = 'SecurePassword123'
+const email = 'john.doe@example.com'
 
 const profession_id = 'e3f298ef-5d3e-4daf-b2f9-ab6b21e5f068'
 
@@ -33,7 +34,7 @@ describe('User Endpoints', () => {
     it('should create a new user and return 201 status', async () => {
       const newUser = {
         username,
-        email: 'john.doe@example.com',
+        email,
         password,
       }
 
@@ -286,6 +287,75 @@ describe('User Endpoints', () => {
       expect(res.body).toHaveProperty('jobs')
       expect(Array.isArray(res.body.jobs)).toBeTruthy()
       expect(res.body.jobs.length).toBeGreaterThan(0)
+    })
+  })
+
+  describe('POST /api/users/request-password-reset', () => {
+    it('should return 200 status when email is valid', async () => {
+      const res = await request(app).post('/api/users/request-password-reset').send({
+        email: 'new.email@example.com',
+      })
+
+      expect(res.status).toBe(200)
+    })
+
+    it('should return 400 status when email is invalid', async () => {
+      const res = await request(app).post('/api/users/request-password-reset').send({
+        email: 'john.doe',
+      })
+
+      expect(res.status).toBe(400)
+    })
+  })
+
+  describe('POST /api/users/reset-password', () => {
+    it('should return 400 status when data is invalid', async () => {
+      const res = await request(app).post('/api/users/reset-password').send({
+        userID,
+        resetCode: '1234567',
+        newPassword: '123456',
+        newPassword2: '123456',
+      })
+
+      expect(res.status).toBe(400)
+    })
+
+    it('should return 403 status when data is invalid', async () => {
+      const res = await request(app).post('/api/users/reset-password').send({
+        userID,
+        resetCode: '123456',
+        newPassword: '123456',
+        newPassword2: '123456',
+      })
+
+      expect(res.status).toBe(403)
+    })
+
+    it('should return 404 status when data is invalid', async () => {
+      const res = await request(app).post('/api/users/reset-password').send({
+        userID: 'e3f298ef-5d3e-4daf-b2f9-ab6b21e5f069',
+        resetCode: '123456',
+        newPassword: '123456',
+        newPassword2: '123456',
+      })
+
+      expect(res.status).toBe(404)
+    })
+
+    it('should return 200 status when data is valid', async () => {
+      const codeResult = await db.query(
+        'SELECT reset_token_hash FROM password_resets WHERE user_id = $1 ORDER BY reset_token_expires DESC LIMIT 1',
+        [userID]
+      )
+      const resetCode = codeResult.rows[0].reset_token_hash
+      const res = await request(app).post('/api/users/reset-password').send({
+        userID,
+        resetCode,
+        newPassword: '123456',
+        newPassword2: '123456',
+      })
+
+      expect(res.status).toBe(200)
     })
   })
 

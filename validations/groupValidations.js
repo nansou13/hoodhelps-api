@@ -21,8 +21,7 @@ const createGroupsValidation = (data) => {
     city: { type: 'string', description: 'Ville du groupe' },
     description: { type: 'string', allowEmpty: true, description: 'Description du groupe' },
     background_url: {
-      type: 'string',
-      pattern: '^(https?:\\/\\/)?([\\w.-]+)([\\/\\w .-]*)([\\?&][\\w=&.-]+)*$',
+      type: 'uri',
       description: "URL de l'arrière-plan du groupe",
       allowEmpty: true,
     },
@@ -45,8 +44,7 @@ const groupsUpdateValidation = (data) => {
     city: { type: 'string', description: 'Ville du groupe' },
     description: { type: 'string', description: 'Description du groupe' },
     background_url: {
-      type: 'string',
-      pattern: '^(https?:\\/\\/)?([\\w.-]+)([\\/\\w .-]*)([\\?&][\\w=&.-]+)*$',
+      type: 'uri',
       description: "URL de l'arrière-plan du groupe",
     },
   })

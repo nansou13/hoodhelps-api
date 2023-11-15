@@ -26,8 +26,7 @@ const updateValidation = (data) => {
     first_name: { type: 'string', allowEmpty: true },
     last_name: { type: 'string', allowEmpty: true },
     image_url: {
-      type: 'string',
-      pattern: '^(https?:\\/\\/)?([\\w.-]+)([\\/\\w .-]*)([\\?&][\\w=&.-]+)*$',
+      type: 'uri',
       description: "URL de l'image de profil",
       allowEmpty: true,
     },

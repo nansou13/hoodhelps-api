@@ -43,7 +43,9 @@ const createJoiSchema = function (fields) {
       case 'uuid':
         validator = Joi.string().guid({ version: value.version || 'uuidv4' })
         break
-
+      case 'uri':
+        validator = Joi.string().uri();
+        break
       case 'array':
         validator = Joi.array()
         if (value.items) {

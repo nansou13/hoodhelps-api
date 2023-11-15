@@ -22,7 +22,7 @@ const createGroupsValidation = (data) => {
     description: { type: 'string', allowEmpty: true, description: 'Description du groupe' },
     background_url: {
       type: 'string',
-      pattern: '^(https?:\\/\\/)?([\\da-z.-]+)\\.([a-z.]{2,6})([\\/\\w .-]*)*\\/?$',
+      pattern: '^(https?:\\/\\/)?([\\w.-]+)([\\/\\w .-]*)([\\?&][\\w=&.-]+)*$',
       description: "URL de l'arrière-plan du groupe",
       allowEmpty: true,
     },
@@ -46,7 +46,7 @@ const groupsUpdateValidation = (data) => {
     description: { type: 'string', description: 'Description du groupe' },
     background_url: {
       type: 'string',
-      pattern: '^(https?:\\/\\/)?([\\da-z.-]+)\\.([a-z.]{2,6})([\\/\\w .-]*)*\\/?$',
+      pattern: '^(https?:\\/\\/)?([\\w.-]+)([\\/\\w .-]*)([\\?&][\\w=&.-]+)*$',
       description: "URL de l'arrière-plan du groupe",
     },
   })

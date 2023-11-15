@@ -318,12 +318,12 @@ const saveResetToken = async (userId, tokenData) => {
   }
 }
 
-const verifyResetCodeAndCodeUpdate = async (userId, resetCode, newPassword) => {
+const verifyResetCodeAndCodeUpdate = async (resetCode, newPassword) => {
   // Requête SQL pour trouver l'utilisateur et le code de réinitialisation
-  const query = `SELECT reset_token_hash, reset_token_expires FROM password_resets WHERE user_id = $1 ORDER BY reset_token_expires DESC LIMIT 1`
+  const query = `SELECT user_id, reset_token_hash, reset_token_expires FROM password_resets WHERE reset_token_hash = $1 ORDER BY reset_token_expires DESC LIMIT 1`
 
   try {
-    const { rows } = await pool.query(query, [userId])
+    const { rows } = await pool.query(query, [resetCode])
     const user = rows[0]
 
     if (!user) {
@@ -333,6 +333,7 @@ const verifyResetCodeAndCodeUpdate = async (userId, resetCode, newPassword) => {
       }
     }
 
+    const userId = user.user_id
     const isCodeValid = user.reset_token_hash === resetCode
     const isCodeExpired = new Date(user.reset_token_expires) < new Date()
 

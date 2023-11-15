@@ -311,7 +311,6 @@ describe('User Endpoints', () => {
   describe('POST /api/users/reset-password', () => {
     it('should return 400 status when data is invalid', async () => {
       const res = await request(app).post('/api/users/reset-password').send({
-        userID,
         resetCode: '1234567',
         newPassword: '123456',
         newPassword2: '123456',
@@ -320,20 +319,8 @@ describe('User Endpoints', () => {
       expect(res.status).toBe(400)
     })
 
-    it('should return 403 status when data is invalid', async () => {
-      const res = await request(app).post('/api/users/reset-password').send({
-        userID,
-        resetCode: '123456',
-        newPassword: '123456',
-        newPassword2: '123456',
-      })
-
-      expect(res.status).toBe(403)
-    })
-
     it('should return 404 status when data is invalid', async () => {
       const res = await request(app).post('/api/users/reset-password').send({
-        userID: 'e3f298ef-5d3e-4daf-b2f9-ab6b21e5f069',
         resetCode: '123456',
         newPassword: '123456',
         newPassword2: '123456',
@@ -349,7 +336,6 @@ describe('User Endpoints', () => {
       )
       const resetCode = codeResult.rows[0].reset_token_hash
       const res = await request(app).post('/api/users/reset-password').send({
-        userID,
         resetCode,
         newPassword: '123456',
         newPassword2: '123456',

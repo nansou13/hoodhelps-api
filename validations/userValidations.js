@@ -77,7 +77,6 @@ const emailValidation = (data) => {
 
 const resetPasswordValidation = (data) => {
   const schema = createJoiSchema({
-    userID: { type: 'uuid', required: true },
     resetCode: { type: 'string', required: true, min: 6, max: 6 },
     newPassword: { type: 'string', required: true },
     newPassword2: {

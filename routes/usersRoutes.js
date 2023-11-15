@@ -913,9 +913,6 @@ router.post('/request-password-reset', async (req, res) => {
  *           schema:
  *             type: object
  *             properties:
- *               userID:
- *                 type: string
- *                 format: uuid
  *               resetCode:
  *                 type: string
  *               newPassword:
@@ -942,9 +939,9 @@ router.post('/reset-password', async (req, res) => {
       return res.status(HTTP_STATUS.BAD_REQUEST).json(error.details[0].message)
     }
 
-    const { userID, resetCode, newPassword } = req.body
+    const { resetCode, newPassword } = req.body
 
-    const result = await verifyResetCodeAndCodeUpdate(userID, resetCode, newPassword)
+    const result = await verifyResetCodeAndCodeUpdate(resetCode, newPassword)
 
     if (result.errorCode) {
       return res.status(result.errorCode).json({ error: result.errorMessage })

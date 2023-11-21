@@ -30,6 +30,7 @@ const {
   saveResetToken,
   sendResetTokenByEmail,
   verifyResetCodeAndCodeUpdate,
+  deleteUser,
 } = require('../services/userService')
 const { HTTP_STATUS } = require('../constants')
 const { authenticateToken, generateAccessToken, generateRefreshToken } = require('../token')
@@ -949,6 +950,38 @@ router.post('/reset-password', async (req, res) => {
 
     res.status(200).json(result)
   } catch (error) {
+    res.status(500).send('Erreur serveur')
+  }
+})
+
+/**
+ * @openapi
+ * /api/users/me:
+ *   delete:
+ *     summary: Supprime totalement l'utilisateur
+ *     description: Supprime totalement l'utilisateur
+ *     tags:
+ *       - Users
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: User supprimé avec succès
+ *       400:
+ *         description: Requête invalide
+ *       404:
+ *         description: User non trouvé
+ *       500:
+ *         description: Erreur serveur
+ */
+router.delete('/me', authenticateToken, async (req, res) => {
+  try {
+    const user_id = req.user.id
+
+    const { user, job, group } = await deleteUser(user_id)
+
+    res.status(200).send({ user, job, group })
+  } catch (err) {
     res.status(500).send('Erreur serveur')
   }
 })

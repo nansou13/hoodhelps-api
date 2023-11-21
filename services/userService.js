@@ -318,6 +318,14 @@ const saveResetToken = async (userId, tokenData) => {
   }
 }
 
+const deleteUser = async (userId) => {
+  const userjob = await pool.query('DELETE FROM user_professions WHERE user_id = $1', [userId])
+  const usergroup = await pool.query('DELETE FROM user_groups WHERE user_id = $1', [userId])
+  const query = `DELETE FROM users WHERE id = $1`
+  const user = await pool.query(query, [userId])
+  return { user: user.rowCount, job: userjob.rowCount, group: usergroup.rowCount }
+}
+
 const verifyResetCodeAndCodeUpdate = async (resetCode, newPassword) => {
   // Requête SQL pour trouver l'utilisateur et le code de réinitialisation
   const query = `SELECT user_id, reset_token_hash, reset_token_expires FROM password_resets WHERE reset_token_hash = $1 ORDER BY reset_token_expires DESC LIMIT 1`
@@ -382,4 +390,5 @@ module.exports = {
   saveResetToken,
   sendResetTokenByEmail,
   verifyResetCodeAndCodeUpdate,
+  deleteUser,
 }

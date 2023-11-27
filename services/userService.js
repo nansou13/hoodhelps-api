@@ -69,8 +69,8 @@ const registerUser = async (username, email, password) => {
 
     const hashedPassword = await bcrypt.hash(password, 10)
     const result = await pool.query(
-      'INSERT INTO users (username, email, password_hash) VALUES ($1, $2, $3) RETURNING *',
-      [username, email, hashedPassword]
+      'INSERT INTO users (username, email, password_hash, first_name, last_name) VALUES ($1, $2, $3, $4, $5) RETURNING *',
+      [username, email, hashedPassword, '', '']
     )
     const userResult = result.rows[0]
     delete userResult.password_hash

@@ -122,9 +122,9 @@ router.post('/register', async (req, res) => {
     )
 
     if (errorCode) {
-      res.status(errorCode).json({ error: errorMessage })
+      return res.status(errorCode).json({ error: errorMessage })
     }
-    res.status(HTTP_STATUS.CREATED).json({ user, accessToken, refreshToken })
+    return res.status(HTTP_STATUS.CREATED).json({ user, accessToken, refreshToken })
   } catch (err) {
     res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: err.message })
   }

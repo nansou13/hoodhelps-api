@@ -107,7 +107,7 @@ const { generateResetToken } = require('../utils')
  *       500:
  *         description: Erreur lors de l'inscription
  */
-router.post('/register', async (req, res) => {
+router.post('/register', async (req, res, next) => {
   const { error } = registerValidation(req.body)
   if (error) {
     return res.status(HTTP_STATUS.BAD_REQUEST).json(error.details[0].message)
@@ -126,7 +126,10 @@ router.post('/register', async (req, res) => {
     }
     return res.status(HTTP_STATUS.CREATED).json({ user, accessToken, refreshToken })
   } catch (err) {
-    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: err.message })
+    const errorMessage = new Error('Erreur...500... '.err.message)
+    errorMessage.status = HTTP_STATUS.INTERNAL_SERVER_ERROR // ou tout autre code d'erreur
+    next(errorMessage) // Propagez l'erreur
+    // res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: err.message })
   }
 })
 
@@ -204,7 +207,7 @@ router.post('/register', async (req, res) => {
  *       500:
  *         description: unknown error
  */
-router.post('/login', async (req, res) => {
+router.post('/login', async (req, res, next) => {
   const { error } = loginValidation(req.body)
   if (error) {
     return res.status(HTTP_STATUS.BAD_REQUEST).json(error.details[0].message)
@@ -218,7 +221,10 @@ router.post('/login', async (req, res) => {
     if (err.message === 'access denied') {
       res.status(HTTP_STATUS.FORBIDDEN).json({ error: err.message })
     } else {
-      res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: 'Erreur...500...' })
+      const errorMessage = new Error('Erreur...500... '.err.message)
+      errorMessage.status = HTTP_STATUS.INTERNAL_SERVER_ERROR // ou tout autre code d'erreur
+      next(errorMessage) // Propagez l'erreur
+      // res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: 'Erreur...500...' })
     }
   }
 })
@@ -359,7 +365,7 @@ router.get('/me', authenticateToken, async (req, res) => res.send(req.user))
  *       500:
  *         description: Erreur inconnue
  */
-router.put('/me', authenticateToken, async (req, res) => {
+router.put('/me', authenticateToken, async (req, res, next) => {
   const { error } = updateValidation(req.body)
   if (error) {
     return res.status(HTTP_STATUS.BAD_REQUEST).json(error.details[0].message)
@@ -381,7 +387,10 @@ router.put('/me', authenticateToken, async (req, res) => {
     if (err.message === 'User not found') {
       res.status(HTTP_STATUS.NOT_FOUND).json({ error: err.message })
     } else {
-      res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: `Update failed ${err.message}` })
+      const errorMessage = new Error('Erreur...500... '.err.message)
+      errorMessage.status = HTTP_STATUS.INTERNAL_SERVER_ERROR // ou tout autre code d'erreur
+      next(errorMessage) // Propagez l'erreur
+      // res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: `Update failed ${err.message}` })
     }
   }
 })
@@ -433,8 +442,7 @@ router.put('/me', authenticateToken, async (req, res) => {
  *       500:
  *         description: Erreur inconnue
  */
-
-router.post('/me/job', authenticateToken, async (req, res) => {
+router.post('/me/job', authenticateToken, async (req, res, next) => {
   const { error } = linkJobValidation(req.body)
 
   if (error) {
@@ -455,7 +463,10 @@ router.post('/me/job', authenticateToken, async (req, res) => {
     if (err.message === 'Job link failed') {
       res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: err.message })
     } else {
-      res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: 'Server Error' })
+      const errorMessage = new Error('Erreur...500... '.err.message)
+      errorMessage.status = HTTP_STATUS.INTERNAL_SERVER_ERROR // ou tout autre code d'erreur
+      next(errorMessage) // Propagez l'erreur
+      // res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: 'Server Error' })
     }
   }
 })
@@ -499,8 +510,7 @@ router.post('/me/job', authenticateToken, async (req, res) => {
  *       500:
  *         description: Erreur inconnue
  */
-
-router.get('/me/job', authenticateToken, async (req, res) => {
+router.get('/me/job', authenticateToken, async (req, res, next) => {
   try {
     const userId = req.user.id
     const withoutProfessionId = req.query.without
@@ -509,7 +519,10 @@ router.get('/me/job', authenticateToken, async (req, res) => {
 
     res.status(HTTP_STATUS.OK).json(jobs)
   } catch (err) {
-    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: `Server Error ${err.message}` })
+    const errorMessage = new Error('Erreur...500... '.err.message)
+    errorMessage.status = HTTP_STATUS.INTERNAL_SERVER_ERROR // ou tout autre code d'erreur
+    next(errorMessage) // Propagez l'erreur
+    // res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: `Server Error ${err.message}` })
   }
 })
 
@@ -552,7 +565,7 @@ router.get('/me/job', authenticateToken, async (req, res) => {
  *       500:
  *         description: Erreur inconnue
  */
-router.get('/me/job/:id', authenticateToken, async (req, res) => {
+router.get('/me/job/:id', authenticateToken, async (req, res, next) => {
   const { error } = jobByIDValidation(req.params)
 
   if (error) {
@@ -567,6 +580,9 @@ router.get('/me/job/:id', authenticateToken, async (req, res) => {
 
     res.status(HTTP_STATUS.OK).json(jobByID[0]) // Retourne les données insérées
   } catch (err) {
+    const errorMessage = new Error('Erreur...500... '.err.message)
+    errorMessage.status = HTTP_STATUS.INTERNAL_SERVER_ERROR // ou tout autre code d'erreur
+    next(errorMessage) // Propagez l'erreur
     res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).send('Erreur serveur')
   }
 })
@@ -611,7 +627,7 @@ router.get('/me/job/:id', authenticateToken, async (req, res) => {
  *       500:
  *         description: Erreur inconnue
  */
-router.get('/groups', authenticateToken, async (req, res) => {
+router.get('/groups', authenticateToken, async (req, res, next) => {
   try {
     const userId = req.user.id
 
@@ -619,7 +635,10 @@ router.get('/groups', authenticateToken, async (req, res) => {
 
     res.status(HTTP_STATUS.OK).json(userGroups)
   } catch (err) {
-    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: 'Erreur server' })
+    const errorMessage = new Error('Erreur...500... '.err.message)
+    errorMessage.status = HTTP_STATUS.INTERNAL_SERVER_ERROR // ou tout autre code d'erreur
+    next(errorMessage) // Propagez l'erreur
+    // res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: 'Erreur server' })
   }
 })
 
@@ -696,7 +715,7 @@ router.get('/groups', authenticateToken, async (req, res) => {
  *       500:
  *         description: Erreur lors de l'inscription
  */
-router.get('/:id', async (req, res) => {
+router.get('/:id', async (req, res, next) => {
   const { error } = userIDValidation(req.params)
   if (error) {
     return res.status(HTTP_STATUS.BAD_REQUEST).json(error.details[0].message)
@@ -710,7 +729,10 @@ router.get('/:id', async (req, res) => {
     }
     return res.status(HTTP_STATUS.OK).json(result)
   } catch (err) {
-    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: err.message })
+    const errorMessage = new Error('Erreur...500... '.err.message)
+    errorMessage.status = HTTP_STATUS.INTERNAL_SERVER_ERROR // ou tout autre code d'erreur
+    next(errorMessage) // Propagez l'erreur
+    // return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: err.message })
   }
 })
 
@@ -764,7 +786,7 @@ router.get('/:id', async (req, res) => {
  *       500:
  *         description: Erreur inconnue
  */
-router.put('/me/job/:id', authenticateToken, async (req, res) => {
+router.put('/me/job/:id', authenticateToken, async (req, res, next) => {
   const { error } = jobByIDValidation(req.params)
 
   if (error) {
@@ -786,7 +808,10 @@ router.put('/me/job/:id', authenticateToken, async (req, res) => {
 
     res.status(HTTP_STATUS.OK).json(jobByID) // Retourne les données insérées
   } catch (err) {
-    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).send('Erreur serveur')
+    const errorMessage = new Error('Erreur...500... '.err.message)
+    errorMessage.status = HTTP_STATUS.INTERNAL_SERVER_ERROR // ou tout autre code d'erreur
+    next(errorMessage) // Propagez l'erreur
+    // res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).send('Erreur serveur')
   }
 })
 
@@ -818,7 +843,7 @@ router.put('/me/job/:id', authenticateToken, async (req, res) => {
  *       500:
  *         description: Erreur serveur
  */
-router.delete('/me/job/:id', authenticateToken, async (req, res) => {
+router.delete('/me/job/:id', authenticateToken, async (req, res, next) => {
   const { error } = jobByIDValidation(req.params)
 
   if (error) {
@@ -837,7 +862,10 @@ router.delete('/me/job/:id', authenticateToken, async (req, res) => {
 
     res.status(204).send('Job supprimé avec succès')
   } catch (err) {
-    res.status(500).send('Erreur serveur')
+    const errorMessage = new Error('Erreur...500... '.err.message)
+    errorMessage.status = HTTP_STATUS.INTERNAL_SERVER_ERROR // ou tout autre code d'erreur
+    next(errorMessage) // Propagez l'erreur
+    // res.status(500).send('Erreur serveur')
   }
 })
 
@@ -869,7 +897,7 @@ router.delete('/me/job/:id', authenticateToken, async (req, res) => {
  *       500:
  *         description: Erreur serveur
  */
-router.post('/request-password-reset', async (req, res) => {
+router.post('/request-password-reset', async (req, res, next) => {
   try {
     const { email } = req.body
 
@@ -895,7 +923,10 @@ router.post('/request-password-reset', async (req, res) => {
 
     res.send('Un email de réinitialisation a été envoyé.')
   } catch (error) {
-    res.status(500).send(`Erreur serveur : ${error.message}`)
+    const errorMessage = new Error('Erreur...500... '.err.message)
+    errorMessage.status = HTTP_STATUS.INTERNAL_SERVER_ERROR // ou tout autre code d'erreur
+    next(errorMessage) // Propagez l'erreur
+    // res.status(500).send(`Erreur serveur : ${error.message}`)
   }
 })
 
@@ -932,7 +963,7 @@ router.post('/request-password-reset', async (req, res) => {
  *       500:
  *         description: Erreur serveur
  */
-router.post('/reset-password', async (req, res) => {
+router.post('/reset-password', async (req, res, next) => {
   try {
     const { error } = resetPasswordValidation(req.body)
 
@@ -950,7 +981,10 @@ router.post('/reset-password', async (req, res) => {
 
     res.status(200).json(result)
   } catch (error) {
-    res.status(500).send('Erreur serveur')
+    const errorMessage = new Error('Erreur...500... '.err.message)
+    errorMessage.status = HTTP_STATUS.INTERNAL_SERVER_ERROR // ou tout autre code d'erreur
+    next(errorMessage) // Propagez l'erreur
+    // res.status(500).send('Erreur serveur')
   }
 })
 
@@ -974,7 +1008,7 @@ router.post('/reset-password', async (req, res) => {
  *       500:
  *         description: Erreur serveur
  */
-router.delete('/me', authenticateToken, async (req, res) => {
+router.delete('/me', authenticateToken, async (req, res, next) => {
   try {
     const user_id = req.user.id
 
@@ -982,7 +1016,10 @@ router.delete('/me', authenticateToken, async (req, res) => {
 
     res.status(200).send({ user, job, group })
   } catch (err) {
-    res.status(500).send('Erreur serveur')
+    const errorMessage = new Error('Erreur...500... '.err.message)
+    errorMessage.status = HTTP_STATUS.INTERNAL_SERVER_ERROR // ou tout autre code d'erreur
+    next(errorMessage) // Propagez l'erreur
+    // res.status(500).send('Erreur serveur')
   }
 })
 

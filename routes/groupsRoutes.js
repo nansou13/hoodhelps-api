@@ -87,7 +87,7 @@ const {
  *       500:
  *         description: Erreur inconnue
  */
-router.get('/', async (req, res) => {
+router.get('/', async (req, res, next) => {
   try {
     const page = parseInt(req.query.page) || 1 // Supposons que la première page soit 1
     const limit = parseInt(req.query.limit) || 10 // Par défaut, retourne 10 groupes
@@ -98,7 +98,10 @@ router.get('/', async (req, res) => {
 
     res.status(HTTP_STATUS.OK).json(result)
   } catch (err) {
-    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).send('Erreur serveur')
+    const errorMessage = new Error('Erreur...500... '.err.message)
+    errorMessage.status = HTTP_STATUS.INTERNAL_SERVER_ERROR // ou tout autre code d'erreur
+    next(errorMessage) // Propagez l'erreur
+    // res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).send('Erreur serveur')
   }
 })
 
@@ -162,7 +165,7 @@ router.get('/', async (req, res) => {
  *       500:
  *         description: Erreur inconnue
  */
-router.get('/:id', async (req, res) => {
+router.get('/:id', async (req, res, next) => {
   // Schema de validation Joi pour les paramètres du chemin
   const { error } = groupsByIdValidation(req.params)
 
@@ -179,7 +182,10 @@ router.get('/:id', async (req, res) => {
     }
     return res.status(HTTP_STATUS.OK).json(rows[0])
   } catch (err) {
-    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).send('Erreur serveur')
+    const errorMessage = new Error('Erreur...500... '.err.message)
+    errorMessage.status = HTTP_STATUS.INTERNAL_SERVER_ERROR // ou tout autre code d'erreur
+    next(errorMessage) // Propagez l'erreur
+    // return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).send('Erreur serveur')
   }
 })
 
@@ -246,7 +252,7 @@ router.get('/:id', async (req, res) => {
  *       500:
  *         description: Erreur inconnue
  */
-router.post('/', async (req, res) => {
+router.post('/', async (req, res, next) => {
   const { error } = createGroupsValidation(req.body)
 
   if (error) {
@@ -260,7 +266,10 @@ router.post('/', async (req, res) => {
     if (err.constraint === 'groups_code_key') {
       return res.status(HTTP_STATUS.BAD_REQUEST).json({ error: 'Ce code existe déjà.' })
     }
-    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).send('Erreur serveur')
+    const errorMessage = new Error('Erreur...500... '.err.message)
+    errorMessage.status = HTTP_STATUS.INTERNAL_SERVER_ERROR // ou tout autre code d'erreur
+    next(errorMessage) // Propagez l'erreur
+    // return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).send('Erreur serveur')
   }
 })
 
@@ -342,7 +351,7 @@ router.post('/', async (req, res) => {
  *       500:
  *         description: Erreur inconnue
  */
-router.put('/:id', async (req, res) => {
+router.put('/:id', async (req, res, next) => {
   const ValidationReturn = groupsByIdValidation(req.params)
   if (ValidationReturn.error) {
     return res.status(HTTP_STATUS.BAD_REQUEST).json(ValidationReturn.error.details[0].message)
@@ -366,7 +375,10 @@ router.put('/:id', async (req, res) => {
     if (err.constraint === 'groups_code_key') {
       return res.status(HTTP_STATUS.BAD_REQUEST).json({ error: 'Ce code existe déjà.' })
     }
-    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).send('Erreur serveur')
+    const errorMessage = new Error('Erreur...500... '.err.message)
+    errorMessage.status = HTTP_STATUS.INTERNAL_SERVER_ERROR // ou tout autre code d'erreur
+    next(errorMessage) // Propagez l'erreur
+    // res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).send('Erreur serveur')
   }
 })
 
@@ -420,7 +432,7 @@ router.put('/:id', async (req, res) => {
  *                   type: string
  *                   description: Détails de l'erreur
  */
-router.get('/code/:id', async (req, res) => {
+router.get('/code/:id', async (req, res, next) => {
   // Schema de validation Joi pour les paramètres du chemin
   const { error } = groupsByCodeValidation(req.params)
 
@@ -438,7 +450,10 @@ router.get('/code/:id', async (req, res) => {
 
     return res.json({ id })
   } catch (err) {
-    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: err.message })
+    const errorMessage = new Error('Erreur...500... '.err.message)
+    errorMessage.status = HTTP_STATUS.INTERNAL_SERVER_ERROR // ou tout autre code d'erreur
+    next(errorMessage) // Propagez l'erreur
+    // return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: err.message })
   }
 })
 
@@ -489,7 +504,7 @@ router.get('/code/:id', async (req, res) => {
  *       500:
  *         description: Erreur inconnue
  */
-router.post('/:id/user', async (req, res) => {
+router.post('/:id/user', async (req, res, next) => {
   // Schema de validation Joi pour les paramètres du chemin
   const validationReturn = groupsByIdValidation(req.params)
   if (validationReturn.error) {
@@ -519,7 +534,10 @@ router.post('/:id/user', async (req, res) => {
         .status(HTTP_STATUS.BAD_REQUEST)
         .json({ error: "L'utilisateur est déjà dans ce groupe." })
     }
-    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).send('Erreur serveur')
+    const errorMessage = new Error('Erreur...500... '.err.message)
+    errorMessage.status = HTTP_STATUS.INTERNAL_SERVER_ERROR // ou tout autre code d'erreur
+    next(errorMessage) // Propagez l'erreur
+    // res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).send('Erreur serveur')
   }
 })
 

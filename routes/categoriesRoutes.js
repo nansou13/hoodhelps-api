@@ -57,7 +57,7 @@ const {
  *       500:
  *         description: Erreur inconnue
  */
-router.post('/', async (req, res) => {
+router.post('/', async (req, res, next) => {
   // Schema de validation Joi pour les paramètres du chemin
   const { error } = createCategorieValidation(req.body)
 
@@ -69,7 +69,10 @@ router.post('/', async (req, res) => {
     const result = await createCategorie(req.body.name)
     return res.status(HTTP_STATUS.CREATED).json(result)
   } catch (err) {
-    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: 'erreur serveur...' })
+    const errorMessage = new Error('Erreur...500... '.err.message)
+    errorMessage.status = HTTP_STATUS.INTERNAL_SERVER_ERROR // ou tout autre code d'erreur
+    next(errorMessage) // Propagez l'erreur
+    // res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: 'erreur serveur...' })
   }
 })
 
@@ -99,12 +102,15 @@ router.post('/', async (req, res) => {
  *       500:
  *         description: Erreur inconnue
  */
-router.get('/', cache('2 days'), async (req, res) => {
+router.get('/', cache('2 days'), async (req, res, next) => {
   try {
     const result = await getAllCategories()
     return res.status(HTTP_STATUS.OK).json(result)
   } catch (err) {
-    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: 'Erreur 500....', err })
+    const errorMessage = new Error('Erreur...500... '.err.message)
+    errorMessage.status = HTTP_STATUS.INTERNAL_SERVER_ERROR // ou tout autre code d'erreur
+    next(errorMessage) // Propagez l'erreur
+    // return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: 'Erreur 500....', err })
   }
 })
 
@@ -156,7 +162,7 @@ router.get('/', cache('2 days'), async (req, res) => {
  *       500:
  *         description: Erreur inconnue
  */
-router.get('/group/:group_id', async (req, res) => {
+router.get('/group/:group_id', async (req, res, next) => {
   // Schema de validation Joi pour les paramètres du chemin
   const { error } = getCategorieByGroupIDValidation(req.params)
 
@@ -175,7 +181,10 @@ router.get('/group/:group_id', async (req, res) => {
 
     return res.status(HTTP_STATUS.OK).json(result)
   } catch (err) {
-    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: "Erreur d'inscription" })
+    const errorMessage = new Error('Erreur...500... '.err.message)
+    errorMessage.status = HTTP_STATUS.INTERNAL_SERVER_ERROR // ou tout autre code d'erreur
+    next(errorMessage) // Propagez l'erreur
+    // return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: "Erreur d'inscription" })
   }
 })
 
@@ -222,7 +231,7 @@ router.get('/group/:group_id', async (req, res) => {
  *       500:
  *         description: Erreur inconnue
  */
-router.post('/:id', async (req, res) => {
+router.post('/:id', async (req, res, next) => {
   // Schema de validation Joi pour les paramètres du chemin
   const { error } = categorieIdValidation(req.params)
 
@@ -245,7 +254,10 @@ router.post('/:id', async (req, res) => {
 
     return res.status(HTTP_STATUS.CREATED).json(result)
   } catch (err) {
-    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: 'Categorie non trouvée' })
+    const errorMessage = new Error('Erreur...500... '.err.message)
+    errorMessage.status = HTTP_STATUS.INTERNAL_SERVER_ERROR // ou tout autre code d'erreur
+    next(errorMessage) // Propagez l'erreur
+    // res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: 'Categorie non trouvée' })
   }
 })
 
@@ -293,7 +305,7 @@ router.post('/:id', async (req, res) => {
  *       500:
  *         description: Erreur inconnue
  */
-router.get('/:id', async (req, res) => {
+router.get('/:id', async (req, res, next) => {
   // Schema de validation Joi pour les paramètres du chemin
   const { error } = categorieIdValidation(req.params)
 
@@ -311,7 +323,10 @@ router.get('/:id', async (req, res) => {
 
     return res.status(HTTP_STATUS.OK).json(result)
   } catch (err) {
-    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: "Erreur d'inscription" })
+    const errorMessage = new Error('Erreur...500... '.err.message)
+    errorMessage.status = HTTP_STATUS.INTERNAL_SERVER_ERROR // ou tout autre code d'erreur
+    next(errorMessage) // Propagez l'erreur
+    // return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: "Erreur d'inscription" })
   }
 })
 
@@ -383,7 +398,7 @@ router.get('/:id', async (req, res) => {
  *       500:
  *         description: Erreur inconnue
  */
-router.get('/:groupId/jobs/:professionId/users', async (req, res) => {
+router.get('/:groupId/jobs/:professionId/users', async (req, res, next) => {
   // Schema de validation Joi pour les paramètres du chemin
   const { error } = getUserFromGroupIDAndJobIDValidation(req.params)
 
@@ -399,7 +414,10 @@ router.get('/:groupId/jobs/:professionId/users', async (req, res) => {
 
     res.status(HTTP_STATUS.OK).json(result)
   } catch (errors) {
-    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: 'Erreur serveur' })
+    const errorMessage = new Error('Erreur...500... '.err.message)
+    errorMessage.status = HTTP_STATUS.INTERNAL_SERVER_ERROR // ou tout autre code d'erreur
+    next(errorMessage) // Propagez l'erreur
+    // res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: 'Erreur serveur' })
   }
 })
 

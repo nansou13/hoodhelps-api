@@ -78,7 +78,6 @@ app.use('/api/categories', categoriesRoutes)
 app.use('/api/groups', groupsRoutes)
 app.use('/api/cache', cacheRoutes)
 
-
 // Middleware pour gérer les erreurs
 app.use((err, req, res, next) => {
   // Vérifiez si l'erreur est une erreur 4xx ou 5xx

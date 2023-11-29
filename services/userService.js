@@ -84,7 +84,7 @@ const registerUser = async (username, email, password) => {
   }
 }
 
-const loginUser = async (username, password) => {
+const loginUser = async (username, password, token_notification = '') => {
   try {
     const result = await pool.query('SELECT * FROM users WHERE username = $1', [username])
 
@@ -100,6 +100,12 @@ const loginUser = async (username, password) => {
 
     const userResult = result.rows[0]
     delete userResult.password_hash
+
+    // Mise à jour de last_login_date
+    await pool.query('UPDATE users SET last_login = NOW(), token_notification = $2 WHERE id = $1', [
+      userResult.id,
+      token_notification,
+    ])
 
     const accessToken = generateAccessToken(userResult)
     const refreshToken = generateRefreshToken(userResult)

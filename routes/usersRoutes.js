@@ -152,6 +152,8 @@ router.post('/register', async (req, res, next) => {
  *                 type: string
  *               password:
  *                 type: string
+ *               token_notification:
+ *                 type: string
  *             example:
  *               username: nansou
  *               password: coucou
@@ -214,8 +216,12 @@ router.post('/login', async (req, res, next) => {
   }
 
   try {
-    const { username, password } = req.body
-    const { user, accessToken, refreshToken } = await loginUser(username, password)
+    const { username, password, token_notification = '' } = req.body
+    const { user, accessToken, refreshToken } = await loginUser(
+      username,
+      password,
+      token_notification
+    )
     res.json({ user, accessToken, refreshToken })
   } catch (err) {
     if (err.message === 'access denied') {

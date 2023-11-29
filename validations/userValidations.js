@@ -14,6 +14,7 @@ const loginValidation = (data) => {
   const schema = createJoiSchema({
     username: { type: 'string', required: true },
     password: { type: 'string', required: true },
+    token_notification: { type: 'string', required: false },
   })
 
   return schema.validate(data)

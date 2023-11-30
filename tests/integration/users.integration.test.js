@@ -45,6 +45,7 @@ describe('User Endpoints', () => {
 
       expect(res.status).toBe(201)
       expect(res.body).toHaveProperty('user')
+      expect(res.body.user.username).toBe(username.toLowerCase())
       expect(res.body).toHaveProperty('accessToken')
       expect(res.body).toHaveProperty('refreshToken')
     })

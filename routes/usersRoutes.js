@@ -32,6 +32,7 @@ const {
   verifyResetCodeAndCodeUpdate,
   deleteUser,
 } = require('../services/userService')
+const { sendNotification } = require('../services/firebaseAdminService')
 const { HTTP_STATUS } = require('../constants')
 const { authenticateToken, generateAccessToken, generateRefreshToken } = require('../token')
 const { generateResetToken } = require('../utils')
@@ -1026,6 +1027,45 @@ router.delete('/me', authenticateToken, async (req, res, next) => {
     errorMessage.status = HTTP_STATUS.INTERNAL_SERVER_ERROR // ou tout autre code d'erreur
     next(errorMessage) // Propagez l'erreur
     // res.status(500).send('Erreur serveur')
+  }
+})
+
+/**
+ * @openapi
+ * /api/users/notification/custom:
+ *   post:
+ *     summary: Envoyer une notification à un user
+ *     description: Envoyer une notification à un user via son token
+ *     tags:
+ *       - Users
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               token:
+ *                 type: string
+ *               title:
+ *                 type: string
+ *               body:
+ *                 type: string
+ *             example:
+ *               token: eXd90XN2rElwo6naBSfCtk:APA91bFUeQs8tw2DvDNlWruXqm5vsGAYHdRIEIRbD3QnRXyX_IHSzn3TMg7XNooF7xAE0s9t9SjDkV3sJ8Mf839szCjpmWEG70BQxMlra2v17BUaGNH0I47vcVmQMTlyFVdBeRZjtJnV
+ *               title: Nouveau membre dans le groupe
+ *               body: Ta soeur a rejoint votre groupe!
+ *     responses:
+ *       200:
+ *         description: Message envoyé avec succès
+ */
+router.post('/notification/custom', async (req, res, next) => {
+  const { token, title, body } = req.body
+  try {
+    await sendNotification(token, title, body)
+    res.status(200).send('test')
+  } catch (err) {
+    next(err)
   }
 })
 

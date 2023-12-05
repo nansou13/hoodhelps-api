@@ -20,6 +20,7 @@ const {
   createJob,
   getCategorieById,
   getUsersFromGroupAndJobID,
+  getCategoriesWithUsersFromGroupID,
 } = require('../services/categorieService')
 
 /**
@@ -411,6 +412,65 @@ router.get('/:groupId/jobs/:professionId/users', async (req, res, next) => {
     const { professionId } = req.params
 
     const result = await getUsersFromGroupAndJobID(groupId, professionId)
+
+    res.status(HTTP_STATUS.OK).json(result)
+  } catch (errors) {
+    const errorMessage = new Error('Erreur...500... '.err.message)
+    errorMessage.status = HTTP_STATUS.INTERNAL_SERVER_ERROR // ou tout autre code d'erreur
+    next(errorMessage) // Propagez l'erreur
+    // res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: 'Erreur serveur' })
+  }
+})
+
+/**
+ * @openapi
+ * /api/categories/{group_id}/users:
+ *   get:
+ *     summary: Liste des catégorie avec les utilisateurs par catégorie et groupe
+ *     description: Liste des catégorie avec les utilisateurs par catégorie et groupe
+ *     tags:
+ *       - Categories
+ *     parameters:
+ *       - in: path
+ *         name: groupId
+ *         description: ID du groupe
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     responses:
+ *       200:
+ *         description: Liste des utilisateurs
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                  type: object
+ *                  properties:
+ *                    id:
+ *                      type: string
+ *                      format: uuid
+ *                    name:
+ *                      type: string
+ *                    users:
+ *                      type: array
+ *       500:
+ *         description: Erreur inconnue
+ */
+router.get('/:group_id/users', async (req, res, next) => {
+  // Schema de validation Joi pour les paramètres du chemin
+  const { error } = getCategorieByGroupIDValidation(req.params)
+
+  if (error) {
+    return res.status(HTTP_STATUS.BAD_REQUEST).json(error.details[0].message)
+  }
+
+  try {
+    // eslint-disable-next-line camelcase
+    const { group_id } = req.params
+
+    const result = await getCategoriesWithUsersFromGroupID(group_id)
 
     res.status(HTTP_STATUS.OK).json(result)
   } catch (errors) {

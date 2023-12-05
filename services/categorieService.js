@@ -108,6 +108,39 @@ const getUsersFromGroupAndJobID = async (groupId, professionId) => {
   return result.rows
 }
 
+const getCategoriesWithUsersFromGroupID = async (groupId) => {
+  // Requête SQL pour obtenir la liste des utilisateurs
+  const query = `
+  SELECT 
+    c.id as category_id, 
+    c.name as category_name, 
+    COALESCE(json_agg(
+        json_build_object(
+            'user_id', u.id,
+            'username', u.username,
+            'first_name', u.first_name,
+            'last_name', u.last_name,
+            'image_url', u.image_url,
+            'profession', p.name,
+            'experience_years', up.experience_years
+        ) ORDER BY u.username
+    ) FILTER (WHERE u.id IS NOT NULL), '[]') as users
+  FROM categories c
+  LEFT JOIN professions p ON c.id = p.category_id
+  LEFT JOIN user_professions up ON p.id = up.profession_id
+  LEFT JOIN (
+    SELECT * FROM users u
+    INNER JOIN user_groups ug ON u.id = ug.user_id
+    WHERE ug.group_id = $1
+  ) u ON up.user_id = u.id
+  GROUP BY c.id
+    `
+
+  const result = await pool.query(query, [groupId])
+
+  return result.rows
+}
+
 module.exports = {
   createCategorie,
   getAllCategories,
@@ -115,4 +148,5 @@ module.exports = {
   createJob,
   getCategorieById,
   getUsersFromGroupAndJobID,
+  getCategoriesWithUsersFromGroupID,
 }

@@ -240,4 +240,21 @@ describe('Categories Endpoints', () => {
       expect(res.status).toBe(400)
     })
   })
+
+  describe('GET /api/categories/{groupId}/users', () => {
+    it('should get categorie list with users by group ID and return 200 status', async () => {
+      const res = await request(app).get(`/api/categories/${groupID}/users`)
+      expect(res.status).toBe(200)
+      expect(res.body).toBeInstanceOf(Array)
+      expect(res.body.length).toBeGreaterThan(0)
+      expect(res.body[0]).toHaveProperty('category_id')
+      expect(res.body[0]).toHaveProperty('category_name')
+      expect(res.body[0]).toHaveProperty('users')
+    })
+
+    it('should return a 400 status for non-uuid group', async () => {
+      const res = await request(app).get(`/api/categories/toto/users`)
+      expect(res.status).toBe(400)
+    })
+  })
 })

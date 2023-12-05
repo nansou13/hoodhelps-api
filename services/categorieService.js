@@ -112,28 +112,21 @@ const getCategoriesWithUsersFromGroupID = async (groupId) => {
   // Requête SQL pour obtenir la liste des utilisateurs
   const query = `
   SELECT 
-    c.id as category_id, 
-    c.name as category_name, 
-    COALESCE(json_agg(
-        json_build_object(
-            'user_id', u.id,
-            'username', u.username,
-            'first_name', u.first_name,
-            'last_name', u.last_name,
-            'image_url', u.image_url,
-            'profession', p.name,
-            'experience_years', up.experience_years
-        ) ORDER BY u.username
-    ) FILTER (WHERE u.id IS NOT NULL), '[]') as users
-  FROM categories c
-  LEFT JOIN professions p ON c.id = p.category_id
-  LEFT JOIN user_professions up ON p.id = up.profession_id
-  LEFT JOIN (
-    SELECT * FROM users u
-    INNER JOIN user_groups ug ON u.id = ug.user_id
-    WHERE ug.group_id = $1
-  ) u ON up.user_id = u.id
-  GROUP BY c.id
+    u.id as user_id,
+    u.username,
+    u.first_name,
+    u.last_name,
+    u.image_url,
+    p.id as job_id,
+    p.name as job_name,
+    c.id as category_id,
+    c.name as category_name
+FROM users u
+JOIN user_professions up ON u.id = up.user_id
+JOIN professions p ON up.profession_id = p.id
+JOIN categories c ON p.category_id = c.id
+JOIN user_groups ug ON u.id = ug.user_id
+WHERE ug.group_id = $1;
     `
 
   const result = await pool.query(query, [groupId])

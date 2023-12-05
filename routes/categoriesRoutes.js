@@ -426,13 +426,13 @@ router.get('/:groupId/jobs/:professionId/users', async (req, res, next) => {
  * @openapi
  * /api/categories/{group_id}/users:
  *   get:
- *     summary: Liste des catégorie avec les utilisateurs par catégorie et groupe
- *     description: Liste des catégorie avec les utilisateurs par catégorie et groupe
+ *     summary: Liste des users avec job name et catégory id d'un groupe
+ *     description: Liste des users avec job name et catégory id d'un groupe
  *     tags:
  *       - Categories
  *     parameters:
  *       - in: path
- *         name: groupId
+ *         name: group_id
  *         description: ID du groupe
  *         required: true
  *         schema:
@@ -448,13 +448,25 @@ router.get('/:groupId/jobs/:professionId/users', async (req, res, next) => {
  *               items:
  *                  type: object
  *                  properties:
- *                    id:
+ *                    user_id:
  *                      type: string
  *                      format: uuid
- *                    name:
+ *                    username:
  *                      type: string
- *                    users:
- *                      type: array
+ *                    first_name:
+ *                      type: string
+ *                    last_name:
+ *                      type: string
+ *                    image_url:
+ *                      type: string
+ *                    job_id:
+ *                      type: string
+ *                      format: uuid
+ *                    job_name:
+ *                      type: string
+ *                    category_id:
+ *                      type: string
+ *                      format: uuid
  *       500:
  *         description: Erreur inconnue
  */
@@ -474,7 +486,7 @@ router.get('/:group_id/users', async (req, res, next) => {
 
     res.status(HTTP_STATUS.OK).json(result)
   } catch (errors) {
-    const errorMessage = new Error('Erreur...500... '.err.message)
+    const errorMessage = new Error('Erreur...500... '.err)
     errorMessage.status = HTTP_STATUS.INTERNAL_SERVER_ERROR // ou tout autre code d'erreur
     next(errorMessage) // Propagez l'erreur
     // res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: 'Erreur serveur' })

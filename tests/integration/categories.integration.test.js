@@ -248,8 +248,10 @@ describe('Categories Endpoints', () => {
       expect(res.body).toBeInstanceOf(Array)
       expect(res.body.length).toBeGreaterThan(0)
       expect(res.body[0]).toHaveProperty('category_id')
-      expect(res.body[0]).toHaveProperty('category_name')
-      expect(res.body[0]).toHaveProperty('users')
+      expect(res.body[0]).toHaveProperty('job_name')
+      expect(res.body[0]).toHaveProperty('first_name')
+      expect(res.body[0]).toHaveProperty('last_name')
+      expect(res.body[0]).toHaveProperty('image_url')
     })
 
     it('should return a 400 status for non-uuid group', async () => {

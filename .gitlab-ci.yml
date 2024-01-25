@@ -5,6 +5,11 @@ stages:
 variables:
   HEROKU_APP_NAME: "ng13-hoodhelp-api"
 
+before_script:
+  - apt-get update -qy
+  - apt-get install -y nodejs
+  - apt-get install -y npm
+  
 test:
   stage: test
   script:

@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "start": "nodemon index.js",
-    "test": "NODE_ENV=test jest --runInBand --detectOpenHandles --forceExit"
+    "test": "NODE_ENV=test jest --runInBand --detectOpenHandles --forceExit",
+    "testCI": "NODE_ENV=prod DEV=0 jest --runInBand --detectOpenHandles --forceExit"
   },
   "jest": {
     "testEnvironment": "node"

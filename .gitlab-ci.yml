@@ -9,12 +9,12 @@ before_script:
   - apt-get update -qy
   - apt-get install -y nodejs
   - apt-get install -y npm
-  
+
 test:
   stage: test
   script:
     - npm install
-    - npm test
+    - npm run testCI
 
 deploy:
   stage: deploy

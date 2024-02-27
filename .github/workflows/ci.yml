@@ -1,0 +1,41 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      NODE_ENV: production
+      ACCESS_TOKEN_SECRET: ${{ secrets.ACCESS_TOKEN_SECRET }}
+      REFRESH_TOKEN_SECRET: ${{ secrets.REFRESH_TOKEN_SECRET }}
+      FIREBASE_SERVICE_ACCOUNT_KEY: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Start Docker services
+        run: docker-compose up -d
+        
+      - name: Display all secrets
+        run: echo "${{ toJson(secrets) }}"
+
+      - name: Display ACCESS_TOKEN_SECRET
+        run: echo "${{ secrets.ACCESS_TOKEN_SECRET }}"
+
+      - name: Display Environment Variables in Docker Container
+        run: docker-compose run -e ACCESS_TOKEN_SECRET=${{ secrets.ACCESS_TOKEN_SECRET }} -e REFRESH_TOKEN_SECRET=${{ secrets.REFRESH_TOKEN_SECRET }} app env
+
+      - name: Run tests
+        run: docker-compose run -e ACCESS_TOKEN_SECRET=${{ secrets.ACCESS_TOKEN_SECRET }} -e REFRESH_TOKEN_SECRET=${{ secrets.REFRESH_TOKEN_SECRET }} app npm run test:ci
+          # exit_code=$?
+          # if [ $exit_code -ne 0 ]; then
+          #   echo "Tests failed. Exiting with code $exit_code"
+          #   exit $exit_code
+          # fi
+      - name: Stop Docker services
+        run: docker-compose down

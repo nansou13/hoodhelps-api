@@ -1,4 +1,10 @@
 const jwt = require('jsonwebtoken')
+const dotenv = require('dotenv')
+
+// Charger les variables d'environnement locales si on est en développement ou en test
+if (process.env.NODE_ENV !== 'production') {
+  dotenv.config()
+}
 
 function generateRefreshToken(user) {
   return jwt.sign(user, process.env.REFRESH_TOKEN_SECRET, { expiresIn: '1y' })

@@ -32,7 +32,7 @@ const {
   verifyResetCodeAndCodeUpdate,
   deleteUser,
 } = require('../services/userService')
-const { sendNotification } = require('../services/firebaseAdminService')
+// const { sendNotification } = require('../services/firebaseAdminService')
 const { HTTP_STATUS } = require('../constants')
 const { authenticateToken, generateAccessToken, generateRefreshToken } = require('../token')
 const { generateResetToken } = require('../utils')
@@ -127,7 +127,7 @@ router.post('/register', async (req, res, next) => {
     }
     return res.status(HTTP_STATUS.CREATED).json({ user, accessToken, refreshToken })
   } catch (err) {
-    const errorMessage = new Error('Erreur...500... '.err.message)
+    const errorMessage = new Error('Erreur...500... '.message)
     errorMessage.status = HTTP_STATUS.INTERNAL_SERVER_ERROR // ou tout autre code d'erreur
     next(errorMessage) // Propagez l'erreur
     // res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: err.message })
@@ -1059,14 +1059,14 @@ router.delete('/me', authenticateToken, async (req, res, next) => {
  *       200:
  *         description: Message envoyé avec succès
  */
-router.post('/notification/custom', async (req, res, next) => {
-  const { token, title, body } = req.body
-  try {
-    await sendNotification(token, title, body)
-    res.status(200).send('test')
-  } catch (err) {
-    next(err)
-  }
-})
+// router.post('/notification/custom', async (req, res, next) => {
+//   const { token, title, body } = req.body
+//   try {
+//     await sendNotification(token, title, body)
+//     res.status(200).send('test')
+//   } catch (err) {
+//     next(err)
+//   }
+// })
 
 module.exports = router

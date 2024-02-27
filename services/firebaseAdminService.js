@@ -1,5 +1,10 @@
 const admin = require('firebase-admin')
-require('dotenv').config()
+const dotenv = require('dotenv')
+
+// Charger les variables d'environnement locales si on est en développement ou en test
+if (process.env.NODE_ENV !== 'production') {
+  dotenv.config()
+}
 
 const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_KEY)
 

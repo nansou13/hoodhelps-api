@@ -1,0 +1,30 @@
+version: '3'
+services:
+  postgres:
+    image: postgres:latest
+    ports:
+      - "8081:5432"
+    environment:
+      POSTGRES_DB: testdb
+      POSTGRES_USER: testuser
+      POSTGRES_PASSWORD: testpassword
+    volumes:
+      - ./database/01-init-DB.sql:/docker-entrypoint-initdb.d/1_structure.sql
+      - ./database/02-load-data.sql:/docker-entrypoint-initdb.d/2_data.sql
+    networks:
+      - app-network
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    depends_on:
+      - postgres
+    environment:
+      DATABASE_URL: postgresql://testuser:testpassword@postgres:5432/testdb
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge

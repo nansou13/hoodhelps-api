@@ -1,4 +1,4 @@
-name: CI
+name: Continuous Integration
 
 on:
   push:
@@ -6,10 +6,12 @@ on:
       - main
 
 jobs:
-  build:
+  build_and_test:
+    name: Build and Test
     runs-on: ubuntu-latest
     env:
       NODE_ENV: production
+      # Add other environment variables here as needed
       ACCESS_TOKEN_SECRET: ${{ secrets.ACCESS_TOKEN_SECRET }}
       REFRESH_TOKEN_SECRET: ${{ secrets.REFRESH_TOKEN_SECRET }}
       FIREBASE_SERVICE_ACCOUNT_KEY: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY }}
@@ -24,18 +26,11 @@ jobs:
       - name: Display all secrets
         run: echo "${{ toJson(secrets) }}"
 
-      - name: Display ACCESS_TOKEN_SECRET
-        run: echo "${{ secrets.ACCESS_TOKEN_SECRET }}"
-
       - name: Display Environment Variables in Docker Container
         run: docker-compose run app env
 
       - name: Run tests
         run: docker-compose run app npm run test:ci
-          # exit_code=$?
-          # if [ $exit_code -ne 0 ]; then
-          #   echo "Tests failed. Exiting with code $exit_code"
-          #   exit $exit_code
-          # fi
+
       - name: Stop Docker services
         run: docker-compose down

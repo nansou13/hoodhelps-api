@@ -52,10 +52,25 @@ create a docker volume named `dbapp`
 docker volume create dbapp
 ```
 
-Run the docker compose
+Run the docker compose database
 ```sh
 cd database
 docker-compose up -d --force-recreate
+```
+
+### CI
+
+Run the docker compose jest test with memory database
+```sh
+cd ./
+docker-compose up --build
+```
+
+Mandatory env var 
+```sh
+ACCESS_TOKEN_SECRET: ${ACCESS_TOKEN_SECRET}
+REFRESH_TOKEN_SECRET: ${REFRESH_TOKEN_SECRET}
+FIREBASE_SERVICE_ACCOUNT_KEY: ${FIREBASE_SERVICE_ACCOUNT_KEY}
 ```
 
 ### Env var 

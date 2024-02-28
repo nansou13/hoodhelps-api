@@ -58,8 +58,7 @@ const createJoiSchema = function (fields) {
 
       case 'object':
         if (value.properties) {
-          const objectValidator = createJoiSchema(value.properties)
-          validator = Joi.object().keys(objectValidator)
+          validator = createJoiSchema(value.properties)
         }
         break
 

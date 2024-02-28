@@ -6,7 +6,9 @@
   "scripts": {
     "start": "nodemon index.js",
     "test": "jest --runInBand --detectOpenHandles --bail --forceExit",
-    "test:ci": "jest --runInBand --detectOpenHandles --bail --forceExit --ci"
+    "test:ci": "jest --runInBand --detectOpenHandles --bail --forceExit --ci",
+    "test:watch": "jest --runInBand --watchAll",
+    "test:coverage": "jest --coverage --runInBand --detectOpenHandles --forceExit"
   },
   "jest": {
     "testEnvironment": "node"

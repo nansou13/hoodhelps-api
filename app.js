@@ -10,6 +10,7 @@ const nodemailer = require('nodemailer')
 const userRoutes = require('./routes/usersRoutes')
 const categoriesRoutes = require('./routes/categoriesRoutes')
 const groupsRoutes = require('./routes/groupsRoutes')
+const chatMessageRoutes = require('./routes/chatMessageRoutes')
 const cacheRoutes = require('./routes/cacheRoutes')
 
 const options = {
@@ -76,6 +77,7 @@ app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec))
 app.use('/api/users', userRoutes)
 app.use('/api/categories', categoriesRoutes)
 app.use('/api/groups', groupsRoutes)
+app.use('/api/chat-message', chatMessageRoutes)
 app.use('/api/cache', cacheRoutes)
 
 // Middleware pour gérer les erreurs

@@ -189,6 +189,14 @@ describe('Groups Endpoints', () => {
       expect(res.body).toHaveProperty('group_id')
     })
 
+    it('should return 403 status when user already exist', async () => {
+      const res = await request(app).post(`/api/groups/${groupID}/user`).send({
+        user_id: userID,
+      })
+
+      expect(res.status).toBe(403)
+    })
+
     it('should return 400 status when validation fails', async () => {
       const res = await request(app).post(`/api/groups/${groupID}/user`).send({
         user_id: 'pouet',

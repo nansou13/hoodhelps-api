@@ -74,3 +74,12 @@ CREATE TABLE password_resets (
     created_at TIMESTAMP DEFAULT current_timestamp
 );
 
+DROP TYPE IF EXISTS chat_messages;
+CREATE TABLE chat_messages (
+    message_id SERIAL PRIMARY KEY,
+    content TEXT NOT NULL,
+    user_id UUID REFERENCES users(id),
+    group_id UUID REFERENCES groups(id),
+    created_at TIMESTAMP DEFAULT current_timestamp
+);
+CREATE INDEX idx_group_id ON chat_messages (group_id);

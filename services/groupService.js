@@ -168,8 +168,31 @@ const getGroupsByCode = async (code) => {
   }
 }
 
+const groupCheckUserExist = async (group_id, user_id) => {
+  try {
+    const result = await pool.query(
+      'SELECT * FROM user_groups WHERE group_id = $1 AND user_id = $2',
+      [group_id, user_id]
+    )
+    if (result.rowCount !== 1) {
+      return false
+    }
+    return true
+  } catch (err) {
+    throw err
+  }
+}
+
 const groupsAddUser = async (groupID, userID) => {
   try {
+    // check if user exist
+    const userExist = await groupCheckUserExist(groupID, userID)
+    if (userExist) {
+      return {
+        errorCode: HTTP_STATUS.FORBIDDEN,
+        errorMessage: 'Utilisateur déjà dans le groupe',
+      }
+    }
     // Role est optionnel, s'il n'est pas fourni, il sera défini par défaut sur 'user' grâce à la définition de la table
     const query = `INSERT INTO user_groups (user_id, group_id) VALUES ($1, $2) RETURNING *`
     const values = [userID, groupID]
@@ -189,4 +212,5 @@ module.exports = {
   updateGroups,
   getGroupsByCode,
   groupsAddUser,
+  groupCheckUserExist,
 }

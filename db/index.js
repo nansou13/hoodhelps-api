@@ -1,7 +1,7 @@
 /* eslint-disable eqeqeq */
 const { Pool } = require('pg')
 
-const connectionString = process.env.DATABASE_URL
+const connectionString = process.env.PG_DATABASE_URL
 
 const pool = new Pool({
   connectionString,

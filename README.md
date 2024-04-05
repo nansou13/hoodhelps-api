@@ -80,7 +80,7 @@ ACCESS_TOKEN_SECRET=xxxxxxxxxxxxx
 REFRESH_TOKEN_SECRET=xxxxxxxxxxxxxxx
 
 DEV=1
-DATABASE_URL=postgresql://xxx:yyyy@localhost:5432/app
+PG_DATABASE_URL=postgresql://xxx:yyyy@localhost:5432/app
 
 MAILTRAP_USER = mail@mail.fr
 MAILTRAP_PASSWORD = password

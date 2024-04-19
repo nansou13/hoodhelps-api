@@ -70,7 +70,8 @@ router.post('/', async (req, res, next) => {
     const result = await createCategorie(req.body.name)
     return res.status(HTTP_STATUS.CREATED).json(result)
   } catch (err) {
-    const errorMessage = new Error('Erreur...500... '.err.message)
+    // throw new Error('Erreur...500... ',err)
+    const errorMessage = new Error('Erreur...500... ', err)
     errorMessage.status = HTTP_STATUS.INTERNAL_SERVER_ERROR // ou tout autre code d'erreur
     next(errorMessage) // Propagez l'erreur
     // res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: 'erreur serveur...' })

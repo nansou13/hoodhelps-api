@@ -6,6 +6,7 @@ const cors = require('cors')
 const swaggerUi = require('swagger-ui-express')
 const compression = require('compression')
 const nodemailer = require('nodemailer')
+const { H } = require('@highlight-run/node')
 
 const userRoutes = require('./routes/usersRoutes')
 const categoriesRoutes = require('./routes/categoriesRoutes')
@@ -64,6 +65,18 @@ const transporter = nodemailer.createTransport({
 
 const swaggerSpec = swaggerJSDoc(options)
 
+if (process.env.NODE_ENV === 'production') {
+  H.init({
+    projectID: 'zg0pkknd',
+    serviceName: 'HoodHelps API',
+    environment: 'production',
+    networkRecording: {
+      enabled: true,
+      recordHeadersAndBody: true,
+    },
+  })
+}
+
 // Autorise toutes les origines à accéder à votre API (à des fins de développement)
 app.use(cors())
 
@@ -82,6 +95,10 @@ app.use('/api/cache', cacheRoutes)
 
 // Middleware pour gérer les erreurs
 app.use((err, req, res, next) => {
+  if (process.env.NODE_ENV === 'production') {
+    const parsed = H.parseHeaders(req.headers)
+    H.consumeError(err, parsed?.secureSessionId, parsed?.requestId)
+  }
   // Vérifiez si l'erreur est une erreur 4xx ou 5xx
   if (err.status >= 400 && err.status < 600) {
     // Format du message d'e-mail

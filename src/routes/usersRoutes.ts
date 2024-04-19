@@ -1,10 +1,11 @@
 /* eslint-disable no-plusplus */
 /* eslint-disable camelcase */
 /* eslint-disable consistent-return */
-const express = require('express')
+import { Router } from 'express'
 
-const router = express.Router()
-const {
+const router = Router()
+
+import {
   registerValidation,
   loginValidation,
   updateValidation,
@@ -14,7 +15,7 @@ const {
   updateJobValidation,
   emailValidation,
   resetPasswordValidation,
-} = require('../validations/userValidations')
+} from '../validations/userValidations'
 const {
   registerUser,
   loginUser,

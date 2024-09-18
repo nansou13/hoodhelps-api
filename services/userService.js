@@ -277,7 +277,8 @@ const getUserGroups = async (userId) => {
                 'user_id', u.id,
                 'username', u.username,
                 'first_name', u.first_name,
-                'last_name', u.last_name
+                'last_name', u.last_name,
+                'image_url', u.image_url
             )) AS users
         FROM groups g
         LEFT JOIN user_groups ug ON g.id = ug.group_id

@@ -263,11 +263,32 @@ const getUserJobByID = async (userId, jobId) => {
 
 const getUserGroups = async (userId) => {
   const query = `
-            SELECT groups.id, groups.name, groups.code, groups.address, groups.cp, groups.city, groups.description, groups.background_url, user_groups.role, user_groups.joined_date
-            FROM groups
-            INNER JOIN user_groups ON groups.id = user_groups.group_id
-            WHERE user_groups.user_id = $1
-        `
+    WITH GroupedUsers AS (
+        SELECT 
+            g.id,
+            g.name,
+            g.code,
+            g.address,
+            g.cp,
+            g.city,
+            g.description,
+            g.background_url,
+            jsonb_agg(jsonb_build_object(
+                'user_id', u.id,
+                'username', u.username,
+                'first_name', u.first_name,
+                'last_name', u.last_name
+            )) AS users
+        FROM groups g
+        LEFT JOIN user_groups ug ON g.id = ug.group_id
+        LEFT JOIN users u ON ug.user_id = u.id
+        WHERE g.id IN (
+          SELECT group_id FROM user_groups WHERE user_id = $1
+        )
+        GROUP BY g.id
+    )
+    SELECT * FROM GroupedUsers;
+`
 
   const queryParams = [userId]
   const result = await pool.query(query, queryParams)

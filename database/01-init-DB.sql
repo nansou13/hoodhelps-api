@@ -10,6 +10,8 @@ CREATE TABLE groups (
     cp VARCHAR(10),
     city VARCHAR(100),
     description TEXT,
+    whatsapp_link TEXT,
+    website_url TEXT,
     background_url TEXT
 );
 

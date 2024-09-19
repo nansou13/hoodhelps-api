@@ -264,31 +264,38 @@ const getUserJobByID = async (userId, jobId) => {
 const getUserGroups = async (userId) => {
   const query = `
     WITH GroupedUsers AS (
-        SELECT 
-            g.id,
-            g.name,
-            g.code,
-            g.address,
-            g.cp,
-            g.city,
-            g.description,
-            g.background_url,
-            jsonb_agg(jsonb_build_object(
+    SELECT 
+        g.id,
+        g.name,
+        g.code,
+        g.address,
+        g.cp,
+        g.city,
+        g.description,
+        g.background_url,
+        jsonb_agg(
+            jsonb_build_object(
                 'user_id', u.id,
                 'username', u.username,
                 'first_name', u.first_name,
                 'last_name', u.last_name,
-                'image_url', u.image_url
-            )) AS users
-        FROM groups g
-        LEFT JOIN user_groups ug ON g.id = ug.group_id
-        LEFT JOIN users u ON ug.user_id = u.id
-        WHERE g.id IN (
-          SELECT group_id FROM user_groups WHERE user_id = $1
-        )
-        GROUP BY g.id
+                'image_url', u.image_url,
+                'jobs', (
+                    SELECT jsonb_agg(up.profession_id)
+                    FROM user_professions up
+                    WHERE up.user_id = u.id
+                )
+            )
+        ) AS users
+    FROM groups g
+    LEFT JOIN user_groups ug ON g.id = ug.group_id
+    LEFT JOIN users u ON ug.user_id = u.id
+    WHERE g.id IN (
+        SELECT group_id FROM user_groups WHERE user_id = $1
     )
-    SELECT * FROM GroupedUsers;
+    GROUP BY g.id
+)
+SELECT * FROM GroupedUsers;
 `
 
   const queryParams = [userId]

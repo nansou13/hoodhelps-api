@@ -642,7 +642,7 @@ router.get('/groups', authenticateToken, async (req, res, next) => {
 
     res.status(HTTP_STATUS.OK).json(userGroups)
   } catch (err) {
-    const errorMessage = new Error('Erreur...500... '.err.message)
+    const errorMessage = new Error('Erreur...500... '.err)
     errorMessage.status = HTTP_STATUS.INTERNAL_SERVER_ERROR // ou tout autre code d'erreur
     next(errorMessage) // Propagez l'erreur
     // res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: 'Erreur server' })

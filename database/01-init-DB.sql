@@ -85,3 +85,33 @@ CREATE TABLE chat_messages (
     created_at TIMESTAMP DEFAULT current_timestamp
 );
 CREATE INDEX idx_group_id ON chat_messages (group_id);
+
+-- Ajout d'index 
+-- Index sur la table groups
+CREATE UNIQUE INDEX idx_groups_code ON groups (code);
+
+-- Index sur la table users
+CREATE UNIQUE INDEX idx_users_email ON users (email);
+CREATE UNIQUE INDEX idx_users_username ON users (username);
+
+-- Index sur la table user_groups
+CREATE INDEX idx_user_groups_user_id ON user_groups (user_id);
+CREATE INDEX idx_user_groups_group_id ON user_groups (group_id);
+CREATE INDEX idx_user_groups_user_group ON user_groups (user_id, group_id);
+
+-- Index sur la table professions
+CREATE INDEX idx_professions_category_id ON professions (category_id);
+
+-- Index sur la table user_professions
+CREATE INDEX idx_user_professions_user_id ON user_professions (user_id);
+CREATE INDEX idx_user_professions_profession_id ON user_professions (profession_id);
+CREATE INDEX idx_user_professions_user_profession ON user_professions (user_id, profession_id);
+
+-- Index sur la table password_resets
+CREATE INDEX idx_password_resets_user_id ON password_resets (user_id);
+CREATE INDEX idx_password_resets_reset_token_hash ON password_resets (reset_token_hash);
+
+-- Index sur la table chat_messages
+CREATE INDEX idx_chat_messages_group_id ON chat_messages (group_id);
+CREATE INDEX idx_chat_messages_user_id ON chat_messages (user_id);
+CREATE INDEX idx_chat_messages_user_group ON chat_messages (user_id, group_id);

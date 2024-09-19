@@ -16,6 +16,7 @@ const {
 const {
   createCategorie,
   getAllCategories,
+  getAllJobs,
   getCategoriesFromGroupID,
   createJob,
   getCategorieById,
@@ -107,6 +108,44 @@ router.post('/', async (req, res, next) => {
 router.get('/', cache('2 days'), async (req, res, next) => {
   try {
     const result = await getAllCategories()
+    return res.status(HTTP_STATUS.OK).json(result)
+  } catch (err) {
+    const errorMessage = new Error('Erreur...500... '.err.message)
+    errorMessage.status = HTTP_STATUS.INTERNAL_SERVER_ERROR // ou tout autre code d'erreur
+    next(errorMessage) // Propagez l'erreur
+    // return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: 'Erreur 500....', err })
+  }
+})
+
+/**
+ * @openapi
+ * /api/categories/jobs:
+ *   get:
+ *     summary: Liste tous les jobs
+ *     description: Liste tous les jobs
+ *     tags:
+ *       - Categories
+ *     responses:
+ *       200:
+ *         description: Liste des jobs
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                  type: object
+ *                  properties:
+ *                    id:
+ *                       type: string
+ *                       format: uuid
+ *                    name:
+ *                       type: string
+ *       500:
+ *         description: Erreur inconnue
+ */
+router.get('/jobs', async (req, res, next) => {
+  try {
+    const result = await getAllJobs()
     return res.status(HTTP_STATUS.OK).json(result)
   } catch (err) {
     const errorMessage = new Error('Erreur...500... '.err.message)

@@ -13,6 +13,11 @@ const getAllCategories = async () => {
   return result.rows
 }
 
+const getAllJobs = async () => {
+  const result = await pool.query('SELECT * FROM professions')
+  return result.rows
+}
+
 const createJob = async (categoryId, name) => {
   // check si ID exist dans les catégories
   const exist = await pool.query('SELECT * FROM categories WHERE id = $1', [categoryId])
@@ -137,6 +142,7 @@ WHERE ug.group_id = $1;
 module.exports = {
   createCategorie,
   getAllCategories,
+  getAllJobs,
   getCategoriesFromGroupID,
   createJob,
   getCategorieById,

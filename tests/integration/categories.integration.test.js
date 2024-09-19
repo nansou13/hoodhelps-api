@@ -97,6 +97,18 @@ describe('Categories Endpoints', () => {
     })
   })
 
+  describe('GET /api/categories/jobs', () => {
+    it('should return a list of jobs and a 200 status', async () => {
+      const res = await request(app).get('/api/categories')
+
+      expect(res.status).toBe(200)
+      expect(res.body).toBeInstanceOf(Array)
+      expect(res.body.length).toBeGreaterThan(0)
+      expect(res.body[0]).toHaveProperty('id')
+      expect(res.body[0]).toHaveProperty('name')
+    })
+  })
+
   describe('POST /api/categories/:categoryId', () => {
     it('should create a new job and return a 201 status', async () => {
       const newJob = {

@@ -101,7 +101,9 @@ const getUsersFromGroupAndJobID = async (groupId, professionId) => {
         users.last_login,
         users.is_active,
         users.role,
-        users.phone_number
+        users.phone_number,
+        user_professions.experience_years,
+        user_professions.description
       FROM users
       INNER JOIN user_groups ON users.id = user_groups.user_id
       INNER JOIN user_professions ON users.id = user_professions.user_id

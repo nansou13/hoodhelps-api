@@ -455,7 +455,7 @@ router.get('/:groupId/jobs/:professionId/users', async (req, res, next) => {
 
     res.status(HTTP_STATUS.OK).json(result)
   } catch (errors) {
-    const errorMessage = new Error('Erreur...500... '.errors)
+    const errorMessage = new Error('Erreur...500... '.errors.message)
     errorMessage.status = HTTP_STATUS.INTERNAL_SERVER_ERROR // ou tout autre code d'erreur
     next(errorMessage) // Propagez l'erreur
     // res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: 'Erreur serveur' })

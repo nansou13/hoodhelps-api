@@ -89,26 +89,31 @@ const getCategorieById = async (categorieId) => {
 const getUsersFromGroupAndJobID = async (groupId, professionId) => {
   // Requête SQL pour obtenir la liste des utilisateurs
   const query = `
-      SELECT
-        users.id,
-        users.username,
-        users.email,
-        users.first_name,
-        users.last_name,
-        users.date_of_birth,
-        users.date_registered,
-        users.image_url,
-        users.last_login,
-        users.is_active,
-        users.role,
-        users.phone_number,
-        user_professions.experience_years,
-        user_professions.description
-      FROM users
-      INNER JOIN user_groups ON users.id = user_groups.user_id
-      INNER JOIN user_professions ON users.id = user_professions.user_id
-      WHERE user_groups.group_id = $1 AND user_professions.profession_id = $2
-    `
+  SELECT
+    users.id,
+    users.username,
+    users.email,
+    users.first_name,
+    users.last_name,
+    users.date_of_birth,
+    users.date_registered,
+    users.image_url,
+    users.last_login,
+    users.is_active,
+    users.role,
+    users.phone_number,
+    up_filtered.experience_years,
+    up_filtered.description,
+    ARRAY_AGG(up_all.profession_id) AS profession_ids
+  FROM users
+  INNER JOIN user_groups ON users.id = user_groups.user_id
+  -- On filtre les professions pour la profession_id $2
+  INNER JOIN user_professions up_filtered ON users.id = up_filtered.user_id AND up_filtered.profession_id = $2
+  -- On récupère toutes les professions liées à l'utilisateur, sans filtrage
+  LEFT JOIN user_professions up_all ON users.id = up_all.user_id
+  WHERE user_groups.group_id = $1
+  GROUP BY users.id, up_filtered.experience_years, up_filtered.description
+`
 
   const result = await pool.query(query, [groupId, professionId])
 

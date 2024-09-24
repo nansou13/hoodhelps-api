@@ -52,6 +52,14 @@ const jobByIDValidation = (data) => {
   })
   return schema.validate(data)
 }
+
+const groupByIDValidation = (data) => {
+  const schema = createJoiSchema({
+    id: { type: 'uuid', required: true },
+  })
+  return schema.validate(data)
+}
+
 const userIDValidation = (data) => {
   const schema = createJoiSchema({
     id: { type: 'uuid', required: true },
@@ -97,6 +105,7 @@ module.exports = {
   jobByIDValidation,
   userIDValidation,
   updateJobValidation,
+  groupByIDValidation,
   emailValidation,
   resetPasswordValidation,
 }

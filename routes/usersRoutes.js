@@ -12,6 +12,7 @@ const {
   jobByIDValidation,
   userIDValidation,
   updateJobValidation,
+  groupByIDValidation,
   emailValidation,
   resetPasswordValidation,
 } = require('../validations/userValidations')
@@ -30,6 +31,7 @@ const {
   saveResetToken,
   sendResetTokenByEmail,
   verifyResetCodeAndCodeUpdate,
+  deleteUserGroupByID,
   deleteUser,
 } = require('../services/userService')
 // const { sendNotification } = require('../services/firebaseAdminService')
@@ -868,6 +870,60 @@ router.delete('/me/job/:id', authenticateToken, async (req, res, next) => {
     }
 
     res.status(204).send('Job supprimé avec succès')
+  } catch (err) {
+    const errorMessage = new Error('Erreur...500... '.err.message)
+    errorMessage.status = HTTP_STATUS.INTERNAL_SERVER_ERROR // ou tout autre code d'erreur
+    next(errorMessage) // Propagez l'erreur
+    // res.status(500).send('Erreur serveur')
+  }
+})
+
+/**
+ * @openapi
+ * /api/users/me/group/{id}:
+ *   delete:
+ *     summary: Supprime le group d'un utilisateur via son id
+ *     description: Supprime un group spécifique associé à l'utilisateur authentifié
+ *     tags:
+ *       - Users
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         description: ID du groupe à supprimer
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     responses:
+ *       200:
+ *         description: groupe supprimé avec succès
+ *       400:
+ *         description: Requête invalide
+ *       404:
+ *         description: group non trouvé
+ *       500:
+ *         description: Erreur serveur
+ */
+router.delete('/me/group/:id', authenticateToken, async (req, res, next) => {
+  const { error } = groupByIDValidation(req.params)
+
+  if (error) {
+    return res.status(HTTP_STATUS.BAD_REQUEST).json(error.details[0].message)
+  }
+
+  try {
+    const group_id = req.params.id
+    const user_id = req.user.id
+
+    const result = await deleteUserGroupByID(user_id, group_id)
+
+    if (result.errorCode) {
+      return res.status(result.errorCode).json({ error: result.errorMessage })
+    }
+
+    res.status(204).send('Groupe lié au user supprimé avec succès')
   } catch (err) {
     const errorMessage = new Error('Erreur...500... '.err.message)
     errorMessage.status = HTTP_STATUS.INTERNAL_SERVER_ERROR // ou tout autre code d'erreur

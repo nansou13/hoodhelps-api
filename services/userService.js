@@ -333,6 +333,24 @@ const deleteUserJobByID = async (userId, professionId) => {
   return result.rows[0]
 }
 
+const deleteUserGroupByID = async (userId, groupId) => {
+  const query = `DELETE FROM user_groups WHERE user_id = $1 AND group_id = $2 RETURNING *`
+
+  const result = await pool.query(query, [userId, groupId])
+
+  // Si rowCount est 0, cela signifie qu'aucune ligne n'a été supprimée,
+  // probablement parce qu'aucune correspondance n'a été trouvée pour ces ID.
+  if (result.rowCount === 0) {
+    return {
+      errorCode: HTTP_STATUS.NOT_FOUND,
+      errorMessage: "Ce group n'existe pas.",
+    }
+  }
+
+  // La fonction renvoie l'entrée supprimée, utile pour confirmer ce qui a été supprimé
+  return result.rows[0]
+}
+
 const findUserByEmail = async (email) => {
   const formatMail = email.toLowerCase()
 
@@ -426,6 +444,7 @@ module.exports = {
   findUserByEmail,
   saveResetToken,
   sendResetTokenByEmail,
+  deleteUserGroupByID,
   verifyResetCodeAndCodeUpdate,
   deleteUser,
 }

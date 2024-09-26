@@ -149,7 +149,8 @@ const updateUser = async (userId, fieldsToUpdate) => {
 }
 
 const linkJobToUser = async (userId, jobDetails) => {
-  const { profession_id, description, experience_years } = jobDetails
+  const { profession_id, description, experience_years, pro, company_name, company_siret } =
+    jobDetails
 
   // Vérifie d'abord si le job existe
   const existingJob = await pool.query('SELECT * FROM professions WHERE id = $1', [profession_id])
@@ -164,12 +165,20 @@ const linkJobToUser = async (userId, jobDetails) => {
   }
 
   const query = `
-    INSERT INTO user_professions (user_id, profession_id, description, experience_years) 
-    VALUES ($1, $2, $3, $4)
+    INSERT INTO user_professions (user_id, profession_id, description, experience_years, pro, company_name, company_siret) 
+    VALUES ($1, $2, $3, $4, $5, $6, $7)
     RETURNING *;
   `
 
-  const result = await pool.query(query, [userId, profession_id, description, experience_years])
+  const result = await pool.query(query, [
+    userId,
+    profession_id,
+    description,
+    experience_years,
+    pro,
+    company_name,
+    company_siret,
+  ])
 
   if (result.rowCount === 0) {
     throw new Error('Job link failed')
@@ -188,7 +197,9 @@ const getUserById = async (userId) => {
                   'id', p.id,
                   'name', p.name,
                   'description', up.description,
-                  'experience_years', up.experience_years
+                  'experience_years', up.experience_years,
+                  'pro', up.pro,
+                  'company_name', up.company_name
               ) 
               ORDER BY up.experience_years DESC
           ) FILTER (WHERE p.id IS NOT NULL), '[]') AS jobs
@@ -221,7 +232,7 @@ const getUserById = async (userId) => {
 const getUserJobs = async (userId, withoutProfessionId) => {
   let query = `
   SELECT 
-    p.id, p.name, up.description, up.experience_years
+    p.id, p.name, up.description, up.experience_years, up.pro, up.company_name
   FROM 
     user_professions up
   LEFT JOIN 
@@ -237,7 +248,7 @@ const getUserJobs = async (userId, withoutProfessionId) => {
     queryParams.push(withoutProfessionId)
   }
 
-  query += 'GROUP BY p.id, p.name, up.description, up.experience_years;'
+  query += 'GROUP BY p.id, p.name, up.description, up.experience_years, up.pro, up.company_name;'
 
   const result = await pool.query(query, queryParams)
 
@@ -281,7 +292,15 @@ const getUserGroups = async (userId) => {
                 'last_name', u.last_name,
                 'image_url', u.image_url,
                 'jobs', (
-                    SELECT jsonb_agg(up.profession_id)
+                    SELECT jsonb_agg(
+                      jsonb_build_object(
+                        'profession_id', up.profession_id,
+                        'description', up.description,
+                        'experience_years', up.experience_years,
+                        'pro', up.pro,
+                        'company_name', up.company_name
+                      )
+                    )
                     FROM user_professions up
                     WHERE up.user_id = u.id
                 )
@@ -304,10 +323,26 @@ SELECT * FROM GroupedUsers;
   return result.rows
 }
 
-const updateUserJobByID = async (userId, profession_id, experience_years, description) => {
-  const query = `UPDATE user_professions SET description = $1, experience_years = $2 WHERE profession_id = $3 AND user_id = $4 RETURNING *`
+const updateUserJobByID = async (
+  userId,
+  profession_id,
+  experience_years,
+  description,
+  pro = false,
+  company_name = '',
+  company_siret = ''
+) => {
+  const query = `UPDATE user_professions SET description = $1, experience_years = $2, pro = $3, company_name = $4, company_siret = $5 WHERE profession_id = $6 AND user_id = $7 RETURNING *`
 
-  const result = await pool.query(query, [description, experience_years, profession_id, userId])
+  const result = await pool.query(query, [
+    description,
+    experience_years,
+    pro,
+    company_name,
+    company_siret,
+    profession_id,
+    userId,
+  ])
 
   if (result.rowCount === 0) {
     throw new Error('Error updating user job')

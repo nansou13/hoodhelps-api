@@ -64,6 +64,9 @@ CREATE TABLE user_professions (
     profession_id UUID REFERENCES professions(id),
     description TEXT,
     experience_years INTEGER,
+    pro BOOLEAN DEFAULT FALSE,
+    company_name VARCHAR(255) DEFAULT '',
+    company_siret VARCHAR(14),
     PRIMARY KEY (user_id, profession_id)
 );
 

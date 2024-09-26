@@ -428,6 +428,12 @@ router.put('/me', authenticateToken, async (req, res, next) => {
  *                 type: string
  *               experience_years:
  *                 type: integer
+ *               pro:
+ *                 type: boolean
+ *               company_name:
+ *                 type: string
+ *               company_siret:
+ *                 type: string
  *     responses:
  *       200:
  *         description: Utilisateur mis à jour avec succès
@@ -446,6 +452,12 @@ router.put('/me', authenticateToken, async (req, res, next) => {
  *                   type: string
  *                 experience_years:
  *                   type: integer
+ *                 pro:
+ *                   type: boolean
+ *                 company_name:
+ *                   type: string
+ *                 company_siret:
+ *                   type: string
  *       201:
  *         description: Job link to the user
  *       500:
@@ -772,6 +784,12 @@ router.get('/:id', async (req, res, next) => {
  *             properties:
  *               description:
  *                 type: string
+ *               pro:
+ *                 type: boolean
+ *               company_name:
+ *                 type: string
+ *               company_siret:
+ *                 type: string
  *               experience_years:
  *                 type: integer
  *     responses:
@@ -789,6 +807,12 @@ router.get('/:id', async (req, res, next) => {
  *                     type: string
  *                     format: uuid
  *                   description:
+ *                     type: string
+ *                   pro:
+ *                     type: boolean
+ *                   company_name:
+ *                     type: string
+ *                   company_siret:
  *                     type: string
  *                   experience_years:
  *                     type: integer
@@ -811,9 +835,17 @@ router.put('/me/job/:id', authenticateToken, async (req, res, next) => {
   try {
     const user_id = req.user.id
     const job_id = req.params.id
-    const { description, experience_years } = req.body
+    const { description, experience_years, pro, company_name, company_siret } = req.body
 
-    const jobByID = await updateUserJobByID(user_id, job_id, experience_years, description)
+    const jobByID = await updateUserJobByID(
+      user_id,
+      job_id,
+      experience_years,
+      description,
+      pro,
+      company_name,
+      company_siret
+    )
 
     res.status(HTTP_STATUS.OK).json(jobByID) // Retourne les données insérées
   } catch (err) {

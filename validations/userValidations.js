@@ -42,6 +42,9 @@ const linkJobValidation = (data) => {
     profession_id: { type: 'uuid', required: true },
     description: { type: 'string', allowEmpty: true },
     experience_years: { type: 'number' },
+    pro: { type: 'boolean' },
+    company_name: { type: 'string', allowEmpty: true },
+    company_siret: { type: 'string', allowEmpty: true },
   })
   return schema.validate(data)
 }
@@ -71,6 +74,9 @@ const updateJobValidation = (data) => {
   const schema = createJoiSchema({
     description: { type: 'string', allowEmpty: true },
     experience_years: { type: 'number' },
+    pro: { type: 'boolean' },
+    company_name: { type: 'string', allowEmpty: true },
+    company_siret: { type: 'string', allowEmpty: true },
   })
   return schema.validate(data)
 }

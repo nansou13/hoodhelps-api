@@ -104,7 +104,18 @@ const getUsersFromGroupAndJobID = async (groupId, professionId) => {
     users.phone_number,
     up_filtered.experience_years,
     up_filtered.description,
-    ARRAY_AGG(up_all.profession_id) AS profession_ids
+    up_filtered.pro,
+    up_filtered.company_name,
+    JSON_AGG(
+      JSON_BUILD_OBJECT(
+        'profession_id', up_all.profession_id,
+        'experience_years', up_all.experience_years,
+        'description', up_all.description,
+        'pro', up_all.pro,
+        'company_name', up_all.company_name,
+        'company_siret', up_all.company_siret
+      )
+    ) AS professions
   FROM users
   INNER JOIN user_groups ON users.id = user_groups.user_id
   -- On filtre les professions pour la profession_id $2
@@ -112,7 +123,23 @@ const getUsersFromGroupAndJobID = async (groupId, professionId) => {
   -- On récupère toutes les professions liées à l'utilisateur, sans filtrage
   LEFT JOIN user_professions up_all ON users.id = up_all.user_id
   WHERE user_groups.group_id = $1
-  GROUP BY users.id, up_filtered.experience_years, up_filtered.description
+  GROUP BY 
+    users.id, 
+    users.username, 
+    users.email, 
+    users.first_name, 
+    users.last_name, 
+    users.date_of_birth, 
+    users.date_registered, 
+    users.image_url, 
+    users.last_login, 
+    users.is_active, 
+    users.role, 
+    users.phone_number, 
+    up_filtered.experience_years, 
+    up_filtered.description,
+    up_filtered.pro,
+    up_filtered.company_name;
 `
 
   const result = await pool.query(query, [groupId, professionId])

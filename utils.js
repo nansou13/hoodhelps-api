@@ -7,7 +7,7 @@ const generateResetToken = () => {
   const resetCode = Math.floor(100000 + Math.random() * 900000)
 
   // Créer une date d'expiration pour le token, par exemple 1 heure
-  const resetTokenExpires = new Date(Date.now() + 3600000) // 1 heure à partir de maintenant
+  const resetTokenExpires = new Date(Date.now() + 60 * 24 * 60 * 60 * 1000) // 2 mois = 60 jours
 
   return {
     resetCode, // Envoyé à l'utilisateur
